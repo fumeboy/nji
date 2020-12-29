@@ -1,0 +1,7 @@
+.vscode
+.history
+.idea
+*.iml
+go.sum
+.golangci.yaml
+.DS_Store
