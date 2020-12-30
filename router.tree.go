@@ -56,15 +56,25 @@ const (
 )
 
 type node struct {
-	path      string // 表示当前节点的path
-	indices   string // 通常情况下维护了children列表的path的各首字符组成的string，之所以是通常情况，是在处理包含通配符的path处理中会有一些例外情况
+	path      string
+	// 表示当前节点的path，比如 s，earch，upport 这些字段
+	indices   string
+	// 通常情况下维护了children列表的path的各首字符组成的string，之所以是通常情况，是在处理包含通配符的path处理中会有一些例外情况
 	children  []*node
 	handlers  HandlersChain
-	priority  uint32 // 代表了有几条路由会经过此节点，用于在节点进行排序时使用
-	nType     nodeType // 是节点的类型，默认是static类型，还包括了root类型，对于path包含冒号通配符的情况，nType是 param类型，对于包含 * 通配符的情况，nType类型是 catchAll 类型
-	maxParams uint8 // 是当前节点到各个叶子节点的包含的通配符的最大数量
-	wildChild bool // 默认是false，当children是 通配符类型时，wildChild为true
-	fullPath  string // 是从root节点到当前节点的全部path部分；如果此节点为终结节点handlers为对应的处理链，否则为nil
+	// 如果此节点为终结节点handlers为对应的处理链，否则为nil
+	priority  uint32
+	// 代表了有几条路由会经过此节点，用于在节点进行排序时使用
+	nType     nodeType
+	// 是节点的类型，默认是static类型，还包括了root类型
+	// 对于path包含冒号通配符的情况，nType是 param类型
+	// 对于包含 * 通配符的情况，nType类型是 catchAll 类型
+	maxParams uint8
+	// 是当前节点到各个叶子节点的包含的通配符的最大数量
+	wildChild bool
+	// 默认是false，当children是 通配符类型时，wildChild为true
+	fullPath  string
+	// 是从root节点到当前节点的全部path部分
 }
 
 // increments priority of the given child and reorders if necessary.
@@ -112,9 +122,7 @@ walk:
 			n.maxParams = numParams
 		}
 
-		// Find the longest common prefix.
-		// This also implies that the common prefix contains no ':' or '*'
-		// since the existing key can't contain those chars.
+		// 最长公有前缀
 		i := longestCommonPrefix(path, n.path)
 
 		// 如果path与当前的node有部分匹配，需要拆分当前的node
@@ -141,16 +149,15 @@ walk:
 			n.indices = string([]byte{n.path[i]})
 			n.path = path[:i] //当前节点的path只保持前半部分
 			n.handlers = nil
-			n.wildChild = false //后半部分节点一定不包含通配符
+			n.wildChild = false // 拆分后的新父节点一定不包含通配符
 			n.fullPath = fullPath[:parentFullPathIndex+i] //当前节点的fullPath截取
 		}
 
-		// Make new node a child of this node
-		//path没有完成匹配，需要继续向下寻找
+		// path没有完成匹配，需要继续向下寻找
 		if i < len(path) {
 			path = path[i:]  //path 更新为没有匹配上的后半部分
 
-			//如果当前节点是wildChild节点，那么子节点是通配符节点
+			//如果当前节点 wildChild 为 true，那么子节点 children[0] 是通配符节点
 			if n.wildChild {
 				parentFullPathIndex += len(n.path)
 				n = n.children[0]
@@ -165,7 +172,7 @@ walk:
 				// path为通配符的时候必须一致，然后继续向后
 				if len(path) >= len(n.path) && n.path == path[:len(n.path)] {
 					// check for longer wildcard, e.g. :name and :names
-					//path与当前node的path长度相同 或者path有下划线，继续
+					// path与当前node的path长度相同 或者path有下划线，继续
 					if len(n.path) >= len(path) || path[len(n.path)] == '/' {
 						continue walk
 					}
