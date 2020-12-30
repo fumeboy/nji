@@ -13,8 +13,6 @@ import (
 	"nji/plugins"
 )
 
-var _ nji.ViewI = &a{}
-
 type a struct {
 	A plugins.PathParam
 }
@@ -27,11 +25,11 @@ func (view *a) Handle(c *nji.Context) {
 func main() {
 	app := nji.Config{
 		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
 	}.New()
-	app.GET("/param/:A", nji.Inject(&a{})...)
-	http.ListenAndServe(":8003", app)
+	app.GET("/param/:A", nji.Inject(&a{}))
+	app.Run(8003)
 }
+
 ```
 
 ab 测试：

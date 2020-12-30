@@ -5,3 +5,5 @@
 go.sum
 .golangci.yaml
 .DS_Store
+*logout*
+*volumes*

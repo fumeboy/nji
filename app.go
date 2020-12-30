@@ -1,6 +1,7 @@
 package nji
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -84,6 +85,10 @@ func (engine *Engine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	engine.contextPool.Put(ctx)
 }
 
+func (engine *Engine) Run(port int) error {
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), engine)
+}
+
 // 处理连接请求
 func (engine *Engine) handleRequest(ctx *Context) {
 	if engine.Config.CORS {
@@ -94,31 +99,23 @@ func (engine *Engine) handleRequest(ctx *Context) {
 		}
 	}
 
-	httpMethod := ctx.Request.Method
 	rPath := ctx.Request.URL.Path
 	unescape := false
-
 	if engine.Config.UseRawPath && len(ctx.Request.URL.RawPath) > 0 {
 		rPath = ctx.Request.URL.RawPath
 		unescape = engine.Config.UnescapePathValues
 	}
 
 	for k := range engine.trees {
-		if engine.trees[k].method != httpMethod {
+		if engine.trees[k].method != ctx.Request.Method {
 			continue
 		}
 		root := engine.trees[k].root
 		value := root.getValue(rPath, ctx.PathParams, unescape)
 		if value.handlers != nil {
-			// 为ctx属性赋值
 			ctx.handlers = value.handlers
 			ctx.PathParams = value.params
 			ctx.fullPath = value.fullPath
-			// 自动处理OPTIONS请求
-			if engine.Config.CORS {
-				engine.setCORS(ctx.Request, ctx.ResponseWriter)
-			}
-			// 执行ctx中的处理器
 			ctx.Next()
 			return
 		}
@@ -126,7 +123,8 @@ func (engine *Engine) handleRequest(ctx *Context) {
 	}
 
 	// 404
-
+	ctx.ResponseWriter.WriteHeader(404)
+	_, _ = ctx.ResponseWriter.Write([]byte("404 not found"))
 }
 
 // 添加路由

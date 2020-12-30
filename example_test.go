@@ -266,7 +266,6 @@ func TestPanicEvent(t *testing.T) {
 		RootPath:           getRootPath(),
 		UnescapePathValues: true,
 		MaxMultipartMemory: 2 << 20,
-		Recover:            true,
 	}.New()
 	app.GET("/", func(ctx *Context) {
 		panic("这是panic消息")

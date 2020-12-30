@@ -6,37 +6,16 @@ import (
 )
 
 var _ nji.Plugin = &PathParam{}
-var _ nji.Plugin = &PathParamOptional{}
 
 type PathParam struct {
 	Value string
 }
 
-type PathParamOptional struct {
-	PathParam
-	notEmpty
-}
-
-func (pl *PathParam) Inject(f reflect.StructField) func(c *nji.Context) {
+func (pl PathParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(c *nji.Context) {
-		var ok bool
-		var pl = (*PathParam)(c.OffsetV(offset))
-		if pl.Value, ok = c.PathParams.Get(name); !ok{
-			c.Abort()
-		}
-	}
-}
-
-func (pl *PathParamOptional) Inject(f reflect.StructField) func(c *nji.Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(c *nji.Context) {
-		var ok bool
-		var pl = (*PathParamOptional)(c.OffsetV(offset))
-		if pl.Value, ok = c.PathParams.Get(name); ok{
-			pl.notEmpty.value = true
-		}
+	return func(base nji.ViewAddr, c *nji.Context) {
+		var pl = (*PathParam)(base.Offset(offset))
+		pl.Value,_ = c.PathParams.Get(name)
 	}
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // 默认body限制
-const MaxMultipartMemory = 1 << 20
+const MaxMultipartMemory = 1 << 12 // 4k
 
 // 上下文
 type Context struct {
@@ -25,8 +25,7 @@ type Context struct {
 
 	mem map[string]interface{}
 
-	view ViewI
-	viewAddr uintptr
+	Error error
 }
 
 var emptyValues url.Values
@@ -41,7 +40,7 @@ func (ctx *Context) reset(req *http.Request, resp http.ResponseWriter) {
 	ctx.fullPath = ""
 	ctx.parsed = false
 	ctx.mem = map[string]interface{}{}
-	ctx.view = nil
+	ctx.Error = nil
 }
 
 // 解析form数据
@@ -78,7 +77,7 @@ func (ctx *Context) Abort() {
 }
 
 func (ctx *Context) IsAborted() bool {
-	return ctx.index == abortIndex
+	return ctx.index >= abortIndex
 }
 
 // 在Context中写值
