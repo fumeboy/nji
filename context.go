@@ -48,7 +48,8 @@ func (ctx *Context) parseForm() error {
 	if ctx.parsed {
 		return nil
 	}
-	if strings.HasPrefix(ctx.Request.Header.Get("Content-Type"), "multipart/form-data") {
+	ct := ctx.Request.Header.Get("Content-Type")
+	if strings.HasPrefix(ct, "multipart/form-data") {
 		if err := ctx.Request.ParseMultipartForm(ctx.engine.Config.MaxMultipartMemory); err != nil {
 			return err
 		}

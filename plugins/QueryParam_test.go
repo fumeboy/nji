@@ -5,36 +5,32 @@ import (
 	"net/http/httptest"
 	"nji"
 	"nji/plugins"
-	"strings"
 	"testing"
 )
 
 var _ nji.ViewI = &a{}
 
-type b struct {
-	A plugins.PostParam
-	B plugins.PostParamOptional
+type c struct {
+	A plugins.QueryParam
+	B plugins.QueryParamOptional
 }
 
-func (v *b) Handle(c *nji.Context) {
+func (v *c) Handle(c *nji.Context) {
 	c.ResponseWriter.WriteHeader(200)
 	_, _ = c.ResponseWriter.Write([]byte(v.A.Value+v.B.Value))
 }
 
-func TestContextB(t *testing.T) {
+func TestContextC(t *testing.T) {
 	app := nji.Config{
 		UnescapePathValues: true,
 	}.New()
-	app.POST("/api/", nji.Inject(&b{}))
-	reader := strings.NewReader(`A=Hello &B=World!`)
-	r, err := http.NewRequest(http.MethodPost, "/api/", reader)
+	app.GET("/api/", nji.Inject(&c{}))
+	r, err := http.NewRequest("GET", "/api/?A=Hello &B=World!", nil)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	r.Header.Add("Content-Type","application/x-www-form-urlencoded")
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
-
 	t.Log(string(w.Body.Bytes()))
 }
