@@ -1,9 +1,18 @@
 package plugins
 
-type notEmpty struct {
-	value bool
+type optional struct {
+	notEmpty bool
 }
 
-func (e notEmpty) NotEmpty() bool {
-	return e.value
+func (e optional) NotEmpty() bool {
+	return e.notEmpty
+}
+
+var _ error = err{}
+type err struct {
+	msg string
+}
+
+func (e err) Error() string {
+	return e.msg
 }

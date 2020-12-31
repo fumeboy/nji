@@ -48,6 +48,7 @@ func Inject(view ViewI) Handler {
 		for i := 0;i<len(plugins);i++{
 			plugins[i](ViewAddr(addr), c)
 			if c.Error != nil{
+				_,_ = c.ResponseWriter.Write([]byte(c.Error.Error()))
 				return
 			}
 		}

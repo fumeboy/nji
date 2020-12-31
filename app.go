@@ -47,12 +47,15 @@ func (config Config) New() *Engine {
 			config.ExposeHeaders = "*"
 		}
 	}
+	if config.RootPath == ""{
+		config.RootPath = "/"
+	}
 	// 初始化一个引擎
 	engine := &Engine{
 		// 初始化根路由组
 		Router: Router{
 			Handlers: nil,
-			basePath: "/",
+			basePath: config.RootPath,
 			root:     true, // 标记为根路由组
 		},
 		Config: config,
