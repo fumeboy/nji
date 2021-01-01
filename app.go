@@ -7,11 +7,14 @@ import (
 	"sync"
 )
 
-// 引擎配置
+// 默认body限制
+const MaxMultipartMemory = 1<<10<<2 // 4k
+
+// 配置
 type Config struct {
 	UseRawPath         bool  // 使用url.RawPath查找参数
 	UnescapePathValues bool  // 反转义路由参数
-	MaxMultipartMemory int64 // 允许的请求Body大小(默认1 << 20 = 1MB)
+	MaxMultipartMemory int64 // 允许的请求Body大小(默认1 << 12 = 4KB)
 
 	RootPath string // 根路径
 
@@ -23,12 +26,18 @@ type Config struct {
 	AllowCredentials bool
 }
 
-// 引擎
 type Engine struct {
-	Router                 // 路由器
-	Config      Config      // 配置
+	Router
+	Config      Config
 	contextPool sync.Pool   // context池
 	trees       methodTrees // 路由树
+}
+
+func NewServer() *Engine {
+	return Config{
+		UnescapePathValues: true,
+		MaxMultipartMemory: MaxMultipartMemory,
+	}.New()
 }
 
 // 创建一个新引擎

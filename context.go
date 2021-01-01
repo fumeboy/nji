@@ -1,16 +1,11 @@
 package nji
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
 )
-
-// 默认body限制
-const MaxMultipartMemory = 1 << 12 // 4k
 
 // 上下文
 type Context struct {
@@ -26,6 +21,8 @@ type Context struct {
 	mem map[string]interface{}
 
 	Error error
+
+	offset uintptr
 }
 
 var emptyValues url.Values
@@ -41,6 +38,10 @@ func (ctx *Context) reset(req *http.Request, resp http.ResponseWriter) {
 	ctx.parsed = false
 	ctx.mem = map[string]interface{}{}
 	ctx.Error = nil
+}
+
+func (ctx *Context) moveBase(o uintptr){
+	ctx.offset += o
 }
 
 // 解析form数据
@@ -206,13 +207,4 @@ func (ctx *Context) FormParam(key string) (string, bool) {
 		return "", false
 	}
 	return ctx.Request.Form[key][0], true
-}
-
-// 将body里的json数据反序列化到传入的对象
-func (ctx *Context) UnmarshalJSON(obj interface{}) error {
-	body, err := ioutil.ReadAll(ctx.Request.Body)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(body, obj)
 }

@@ -1,0 +1,34 @@
+# inject
+
+解析结构体时
+
+如果字段是无类型名结构体， 判断是否是 group plugin， 如果不是， 交由 group 处理
+其余类型也交由 group 处理， g 处理不了， 找上级 group， 最终都处理不了则 panic
+
+## 需求 / 功能
+
+1. 从 request HEAD 获取信息， 比如 Auth
+2. 从 BODY 解析信息并获取信息，比如 JSON
+3. 验证信息， 是否存在、是否合格， 比如 验证验证码
+
+## 蓝图
+
+type view struct {
+	UserID RequireAuth
+	Body struct{
+	    GroupJSON
+		Password string
+	}
+}
+
+type view struct {
+	UserID RequireAuth
+	Body struct{
+	    GroupJSON
+		Password string
+		isAdmin struct{
+		    GroupAdmin
+		    Key string
+        }
+	}
+}

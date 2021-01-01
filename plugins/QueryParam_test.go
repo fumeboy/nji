@@ -12,7 +12,8 @@ var _ nji.ViewI = &a{}
 
 type c struct {
 	A plugins.QueryParam
-	B plugins.QueryParamOptional
+	B,C,D,E,F plugins.QueryParamOptional
+
 }
 
 func (v *c) Handle(c *nji.Context) {

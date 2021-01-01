@@ -13,7 +13,7 @@ var _ nji.ViewI = &a{}
 
 type b struct {
 	A plugins.PostParam
-	B plugins.PostParamOptional
+	B,C,D,E,F plugins.PostParamOptional
 }
 
 func (v *b) Handle(c *nji.Context) {
