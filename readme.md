@@ -26,7 +26,6 @@ func (view *a) Handle(c *nji.Context) {
 type c struct {
 	A plugins.QueryParam
 	B,C,D,E,F plugins.QueryParamOptional
-
 }
 
 func (v *c) Handle(c *nji.Context) {
@@ -57,7 +56,34 @@ nji 通过使用依赖注入来节省业务代码的反复书写
 
 它提供两个接口 `Plugin` 和 `PluginGroup` 来达成这个目的， 一共有三种使用 Plugin 的方式
 
-## 具名结构体作为 `Plugin`
+## 1. 简单插件
+
+具名结构体作为 `Plugin`
+
+```go
+type view struct {
+	A plugins.PathParam
+}
+```
+
+## 2. 动态插件
+
+整个匿名结构体作为 `Plugin`
+
+```go
+type json struct {
+	Body struct{
+		plugins.DynJSON
+		A string
+		B string
+	}
+}
+```
+
+## 3. 组联系插件
+
+匿名结构体作为作用域，包含 一个 `PluginGroup` 和 N 个 `Plugin`
+
 
 
 # 性能测试：
