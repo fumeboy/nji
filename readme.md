@@ -2,7 +2,10 @@
 
 名称取自 inject 前三个字母
 
-## 示例 PathParam
+# 示例
+## PathParam
+
+返回 URL 参数 `/api/***/:A`
 
 ```go
 // ./plugins/PathParam_test.go
@@ -12,23 +15,17 @@ type a struct {
 }
 
 func (view *a) Handle(c *nji.Context) {
-	c.Resp.Writer.WriteHeader(200)
-	_, _ = c.Resp.Writer.Write([]byte(view.A.Value))
-}
-
-func main() {
-	app := nji.NewServer()
-	app.GET("/param/:A", nji.Inject(&a{}))
-	app.Run(8003)
+	c.Resp.String(200,view.A.Value)
 }
 
 ```
 
-## 示例 JSON
+## JSON
 
 ```go
 // ./plugins/dyn.JSON_test.go
-type json_t struct {
+
+type j struct {
 	Body struct{
 		plugins.DynJSON
 		A string
@@ -36,29 +33,21 @@ type json_t struct {
 	}
 }
 
-func (v *json_t) Handle(c *nji.Context) {
-	c.Resp.Writer.WriteHeader(200)
-	_, _ = c.Resp.Writer.Write([]byte(v.Body.A+v.Body.B))
-}
-
-func TestContextJSON(t *testing.T) {
-	app := nji.NewServer()
-	app.POST("/api/", nji.Inject(&json_t{}))
-	reader := strings.NewReader(`{"A":"Hello ", "B": "World!"}`)
-	r, err := http.NewRequest(http.MethodPost, "/api/", reader)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	r.Header.Add("Content-Type","application/json")
-	w := httptest.NewRecorder()
-	app.ServeHTTP(w, r)
-	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
+func (v *j) Handle(c *nji.Context) {
+	c.Resp.String(200,view.Body.A + view.Body.B)
 }
 
 ```
 
-ab 测试：
+# 特性说明
+
+nji 通过使用依赖注入来节省业务代码的反复书写
+
+它提供两个接口 `Plugin` 和 `PluginGroup` 来达成这个目的， 一共有三种使用 Plugin 的方式
+
+
+
+# 性能测试：
 
 `ab -n 10000 -c 100 http://127.0.0.1:8003/param/123`
 

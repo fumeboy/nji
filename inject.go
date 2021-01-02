@@ -103,6 +103,9 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 				injectors = append(injectors, fn)
 			}
 		} else if fv, ok := reflect.New(f.Type).Interface().(PluginGroup); ok {
+			if fv.Support()&method == 0 {
+				panic("请检查插件是否可以放在一起使用")
+			}
 			if fn := parseGroup(fv, f.Offset, &method, hook); fn != nil {
 				injectors = append(injectors, fn)
 			}
