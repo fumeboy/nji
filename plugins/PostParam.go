@@ -18,6 +18,16 @@ func (pl PostParam) Support() nji.Method {
 	return nji.MethodP
 }
 
+func (pl *PostParam) Exec(c *nji.Context, name string) error {
+	var ok bool
+	pl.Value,ok = c.PostParam(name)
+	if ok{
+		return nil
+	}else{
+		return postParamFail
+	}
+}
+
 type PostParamOptional struct {
 	PostParam
 	optional
@@ -27,12 +37,7 @@ func (pl PostParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji
 	offset := f.Offset
 	name := f.Name
 	return func(base nji.ViewAddr, c *nji.Context) {
-		var pl = (*PostParam)(base.Offset(offset))
-		var ok bool
-		pl.Value,ok = c.PostParam(name)
-		if !ok {
-			c.Error = postParamFail
-		}
+		c.Error = (*PostParam)(base.Offset(offset)).Exec(c,name)
 	}
 }
 
@@ -40,10 +45,7 @@ func (pl PostParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddr
 	offset := f.Offset
 	name := f.Name
 	return func(base nji.ViewAddr, c *nji.Context) {
-		var pl = (*PostParamOptional)(base.Offset(offset))
-		var ok bool
-		pl.Value,ok = c.PostParam(name)
-		if ok {
+		if (*PostParam)(base.Offset(offset)).Exec(c,name) != nil{
 			pl.optional.notEmpty = true
 		}
 	}

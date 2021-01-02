@@ -2,6 +2,7 @@ package plugins
 
 import (
 	jsoniter "github.com/json-iterator/go"
+	"io"
 	"nji"
 	"reflect"
 	"unsafe"
@@ -13,11 +14,15 @@ var dynJSONFail = err{"DynJSONFail"}
 
 type DynJSON struct {}
 
-func (g *DynJSON) Support() nji.Method {
+func (pl *DynJSON) Exec(i io.Reader, obj interface{}) error {
+	return jsoniter.NewDecoder(i).Decode(&obj)
+}
+
+func (pl *DynJSON) Support() nji.Method {
 	return nji.MethodP
 }
 
-func (g *DynJSON) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl *DynJSON) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
 	fv := reflect.New(f.Type).Interface()
 	offset := f.Offset
 	return func(base nji.ViewAddr, c *nji.Context) {

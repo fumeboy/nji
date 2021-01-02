@@ -106,8 +106,16 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 			if fv.Support()&method == 0 {
 				panic("请检查插件是否可以放在一起使用")
 			}
-			if fn := parseGroup(fv, f.Offset, &method, hook); fn != nil {
-				injectors = append(injectors, fn)
+			if f.Name == "" { // group plugin 在匿名结构体中，成组使用
+				if fn := parseGroup(fv, f.Offset, &method, hook); fn != nil {
+					injectors = append(injectors, fn)
+				}
+			}else{
+				if fn := fv.InjectAndControl(f); fn != nil { // group plugin 不成组， 单独使用
+					injectors = append(injectors, func(base ViewAddr, c *Context) {
+						fn(base,c)
+					})
+				}
 			}
 		} else {
 			panic("非法的 struct field")
