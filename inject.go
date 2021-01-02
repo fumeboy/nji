@@ -13,7 +13,7 @@ type face struct {
 	data unsafe.Pointer
 }
 
-func parseGroup(stru PluginGroup, offset uintptr, method *Method,hook func(f reflect.StructField)) inj {
+func parseGroup(stru PluginGroup, offset uintptr, method *Method, hook func(f reflect.StructField)) inj {
 	t := reflect.TypeOf(stru).Elem()
 	length := t.NumField()
 	if length == 0 {
@@ -31,13 +31,7 @@ func parseGroup(stru PluginGroup, offset uintptr, method *Method,hook func(f ref
 		}
 		if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
 			if fn := fv.Inject(f); fn != nil {
-				if *method == -1 {
-					*method = fv.Support()
-				} else if fv.Support()&*method == 0 {
-					panic("请检查插件是否可以放在一起使用")
-				}else{
-					*method = fv.Support()&*method
-				}
+				method.Check(fv.Support())
 				injectors = append(injectors, fv.Inject(f))
 			}
 		} else {
@@ -90,32 +84,23 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 		if hook != nil {
 			hook(f)
 		}
-		if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
-			if fn := fv.Inject(f); fn != nil {
-				if method == -1 {
-					method = fv.Support()
-				} else if fv.Support()&method == 0 {
-					panic("请检查插件是否可以放在一起使用")
-				}else{
-					method = fv.Support()&method
-				}
-
-				injectors = append(injectors, fn)
-			}
-		} else if fv, ok := reflect.New(f.Type).Interface().(PluginGroup); ok {
-			if fv.Support()&method == 0 {
-				panic("请检查插件是否可以放在一起使用")
-			}
+		if fv, ok := reflect.New(f.Type).Interface().(PluginGroup); ok {
+			method.Check(fv.Support())
 			if f.Name == "" { // group plugin 在匿名结构体中，成组使用
 				if fn := parseGroup(fv, f.Offset, &method, hook); fn != nil {
 					injectors = append(injectors, fn)
 				}
-			}else{
+			} else {
 				if fn := fv.InjectAndControl(f); fn != nil { // group plugin 不成组， 单独使用
 					injectors = append(injectors, func(base ViewAddr, c *Context) {
-						fn(base,c)
+						fn(base, c)
 					})
 				}
+			}
+		} else if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
+			if fn := fv.Inject(f); fn != nil {
+				method.Check(fv.Support())
+				injectors = append(injectors, fn)
 			}
 		} else {
 			panic("非法的 struct field")
@@ -134,7 +119,7 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 	}
 }
 
-func inject(view ViewI,hook func(f reflect.StructField)) Handler {
+func inject(view ViewI, hook func(f reflect.StructField)) Handler {
 	t := reflect.TypeOf(view).Elem()
 	size := t.Size()
 	length := t.NumField()
@@ -162,5 +147,5 @@ func inject(view ViewI,hook func(f reflect.StructField)) Handler {
 }
 
 func Inject(view ViewI) Handler {
-	return inject(view,nil)
+	return inject(view, nil)
 }

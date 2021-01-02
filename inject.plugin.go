@@ -19,6 +19,16 @@ const (
 	MethodP              = MethodPost | MethodPut | MethodPatch
 )
 
+func (method *Method) Check(m Method){
+	if *method == -1 {
+		*method = m
+	} else if m&*method == 0 {
+		panic("请检查插件是否可以放在一起使用")
+	} else {
+		*method = m & *method
+	}
+}
+
 type PluginGroupCtrl int8
 
 const (

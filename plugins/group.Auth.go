@@ -10,6 +10,7 @@ import (
 var _ nji.PluginGroup = &GroupAuth{}
 
 type GroupAuth struct {
+	RequireAuth
 }
 
 func (g GroupAuth) InjectAndControl(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) nji.PluginGroupCtrl {
@@ -54,7 +55,7 @@ func GenerateToken(username, password string) (string, error) {
 }
 
 // 根据传入的token值获取到Claims对象信息，（进而获取其中的用户名和密码）
-func ParseToken(token string) (*Claims, error) {
+func parseToken(token string) (*Claims, error) {
 
 	//用于解析鉴权的声明，方法内部主要是具体的解码和校验的过程，最终返回*Token
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {

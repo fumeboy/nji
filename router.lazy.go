@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-type lazyRouter struct {
+type lazyRouter struct { // lazyRouter 接收 ViewI，并自动生成 URL
 	*Engine
 }
 
