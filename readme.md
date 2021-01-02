@@ -3,13 +3,13 @@
 名称取自 inject 前三个字母
 
 # 示例
+每个示例是一个完整的 HTTP Handler 
 ## PathParam
 
-返回 URL 参数 `/api/***/:A`
+返回 URL  `/api/***/:A` 中的 参数 `:A`
 
 ```go
 // ./plugins/PathParam_test.go
-
 type a struct {
 	A plugins.PathParam
 }
@@ -17,14 +17,27 @@ type a struct {
 func (view *a) Handle(c *nji.Context) {
 	c.Resp.String(200,view.A.Value)
 }
+```
 
+## QueryParam
+返回 URL  `/api/***/?A=Hello&B=World!` 中的 参数 `?A & B`
+```go
+// ./plugins/QueryParam_test.go
+type c struct {
+	A plugins.QueryParam
+	B,C,D,E,F plugins.QueryParamOptional
+
+}
+
+func (v *c) Handle(c *nji.Context) {
+	c.Resp.String(200,v.A.Value+v.B.Value)
+}
 ```
 
 ## JSON
 
 ```go
 // ./plugins/dyn.JSON_test.go
-
 type j struct {
 	Body struct{
 		plugins.DynJSON
@@ -36,7 +49,6 @@ type j struct {
 func (v *j) Handle(c *nji.Context) {
 	c.Resp.String(200,view.Body.A + view.Body.B)
 }
-
 ```
 
 # 特性说明
@@ -45,6 +57,7 @@ nji 通过使用依赖注入来节省业务代码的反复书写
 
 它提供两个接口 `Plugin` 和 `PluginGroup` 来达成这个目的， 一共有三种使用 Plugin 的方式
 
+## 具名结构体作为 `Plugin`
 
 
 # 性能测试：

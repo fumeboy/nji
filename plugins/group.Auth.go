@@ -3,6 +3,7 @@ package plugins
 import (
 	"nji"
 	"reflect"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var _ nji.PluginGroup = &GroupAuth{}
