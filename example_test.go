@@ -1,12 +1,8 @@
 package nji
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
 )
 
@@ -29,23 +25,6 @@ func TestEcho(t *testing.T) {
 	app.ServeHTTP(httptest.NewRecorder(), r)
 }
 
-// 测试 PathParams
-func TestURLParams(t *testing.T) {
-	app := Config{
-		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
-	}.New()
-	app.GET("/:path/:file", func(ctx *Context) {
-		t.Log(ctx.PathParams.Value("path"))
-		t.Log(ctx.PathParams.Value("file"))
-	})
-	r, err := http.NewRequest("GET", "/haha/hehe||123", nil)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
 
 // 测试Context传值
 func TestContext(t *testing.T) {
@@ -134,99 +113,6 @@ func TestAppend(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
-
-// 测试QueryParams
-func TestQueryParams(t *testing.T) {
-	app := Config{
-		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
-	}.New()
-	app.GET("/object", func(ctx *Context) {
-		t.Log(ctx.QueryParams())
-	})
-	r, err := http.NewRequest("GET", "/object?a=1&b=2", nil)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
-
-// 测试PostParams
-func TestPostParams(t *testing.T) {
-	app := Config{
-		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
-	}.New()
-	app.POST("/object", func(ctx *Context) {
-		t.Log(ctx.PostParams())
-	})
-
-	v := url.Values{}
-	v.Add("a", "1")
-	v.Add("b", "2")
-	r, err := http.NewRequest("POST", "/object", strings.NewReader(v.Encode()))
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
-
-// 测试FormParams
-func TestFormParams(t *testing.T) {
-	app := Config{
-		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
-	}.New()
-	app.POST("/object", func(ctx *Context) {
-		t.Log(ctx.FormParams())
-	})
-
-	v := url.Values{}
-	v.Add("c", "3")
-	v.Add("d", "4")
-	r, err := http.NewRequest("POST", "/object?a=1&b=2", strings.NewReader(v.Encode()))
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	app.ServeHTTP(httptest.NewRecorder(), r)
-}
-
-// 测试UnmarshalJSON
-func TestPostUnmarshalJSON(t *testing.T) {
-	type Obj struct {
-		ID   int64  `json:"id"`
-		Name string `json:"name"`
-	}
-	app := Config{
-		UnescapePathValues: true,
-		MaxMultipartMemory: 20 << 20,
-	}.New()
-	app.POST("/", func(ctx *Context) {
-		var obj Obj
-		t.Log(ctx.UnmarshalJSON(&obj))
-	})
-
-	var o Obj
-	o.ID = 123
-	o.Name = "dxvgef"
-	ob, err := json.Marshal(&o)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	r, err := http.NewRequest("POST", "/", bytes.NewBuffer(ob))
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	r.Header.Set("Content-Type", "application/json")
 	app.ServeHTTP(httptest.NewRecorder(), r)
 }
 

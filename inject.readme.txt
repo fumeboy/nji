@@ -16,7 +16,7 @@
 type view struct {
 	UserID RequireAuth
 	Body struct{
-	    GroupJSON
+	    JSON
 		Password string
 	}
 }
@@ -24,9 +24,10 @@ type view struct {
 type view struct {
 	isAdmin struct{
         GroupAdmin
+        Level GroupAdminExtLevel
     }
 	Body struct{
-	    GroupJSON
+	    JSON
 		Password string
 	}
 }

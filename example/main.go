@@ -1,12 +1,14 @@
 package main
 
-import "nji"
+import (
+	"fmt"
+	"nji"
+)
 
 func main() {
-	app := nji.Config{
-		UnescapePathValues: true,
-	}.New()
-	app.GET("/get/:A", nji.Inject(&a{}))
-	app.POST("/post", nji.Inject(&b{}))
+	fmt.Println(nji.MethodHead)
+	app := nji.NewLazyRouter()
+	app.GET(&a{})
+	app.POST(&b{}, &JSON{})
 	app.Run(8003)
 }

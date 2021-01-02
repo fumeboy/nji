@@ -2,16 +2,10 @@
 
 名称取自 inject 前三个字母
 
-# 示例
+## 示例 PathParam
 
 ```go
-package main
-
-import (
-	"net/http"
-	"nji"
-	"nji/plugins"
-)
+// ./plugins/PathParam_test.go
 
 type a struct {
 	A plugins.PathParam
@@ -23,11 +17,43 @@ func (view *a) Handle(c *nji.Context) {
 }
 
 func main() {
-	app := nji.Config{
-		UnescapePathValues: true,
-	}.New()
+	app := nji.NewServer()
 	app.GET("/param/:A", nji.Inject(&a{}))
 	app.Run(8003)
+}
+
+```
+
+## 示例 JSON
+
+```go
+// ./plugins/dyn.JSON_test.go
+type json_t struct {
+	Body struct{
+		plugins.DynJSON
+		A string
+		B string
+	}
+}
+
+func (v *json_t) Handle(c *nji.Context) {
+	c.ResponseWriter.WriteHeader(200)
+	_, _ = c.ResponseWriter.Write([]byte(v.Body.A+v.Body.B))
+}
+
+func TestContextJSON(t *testing.T) {
+	app := nji.NewServer()
+	app.POST("/api/", nji.Inject(&json_t{}))
+	reader := strings.NewReader(`{"A":"Hello ", "B": "World!"}`)
+	r, err := http.NewRequest(http.MethodPost, "/api/", reader)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	r.Header.Add("Content-Type","application/json")
+	w := httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
 }
 
 ```

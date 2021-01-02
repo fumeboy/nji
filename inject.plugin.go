@@ -13,10 +13,12 @@ const (
 
 type Plugin interface {
 	Inject(f reflect.StructField) func(base ViewAddr, c *Context)
+	Support() Method
 }
 
 type PluginGroup interface {
 	InjectAndControl(f reflect.StructField) func(base ViewAddr, c *Context) PluginGroupCtrl
+	Support() Method
 }
 
 
@@ -26,6 +28,10 @@ type InnerPluginPathParam struct {
 
 func (pl *InnerPluginPathParam) Exec(c *Context, name string) {
 	pl.Value,_ = c.PathParams.Get(name)
+}
+
+func (pl *InnerPluginPathParam) Support() Method {
+	return MethodAny
 }
 
 func (pl InnerPluginPathParam) Inject(f reflect.StructField) func(base ViewAddr, c *Context) {

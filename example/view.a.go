@@ -4,7 +4,7 @@ import (
 	"nji"
 	"nji/plugins"
 )
-
+// URL = /a/123
 type a struct {
 	A plugins.PathParam
 }

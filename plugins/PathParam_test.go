@@ -13,19 +13,18 @@ var _ nji.ViewI = &a{}
 
 type a struct {
 	A plugins.PathParam
+	B plugins.PathParam
 }
 
 func (view *a) Handle(c *nji.Context) {
 	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte("Hello !"))
+	_, _ = c.ResponseWriter.Write([]byte(view.A.Value + view.B.Value))
 }
 
 func TestContext(t *testing.T) {
-	app := nji.Config{
-		UnescapePathValues: true,
-	}.New()
-	app.GET("/context/:A", nji.Inject(&a{}))
-	r, err := http.NewRequest("GET", "/context/2", nil)
+	app := nji.NewLazyRouter()
+	app.GET(&a{})
+	r, err := http.NewRequest("GET", "/a/Hello /World!", nil)
 	if err != nil {
 		t.Error(err.Error())
 		return

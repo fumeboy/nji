@@ -5,6 +5,7 @@ import (
 	"nji/plugins"
 )
 
+// URL = /b
 type b struct {
 	A plugins.PostParamOptional
 	B plugins.PostParam

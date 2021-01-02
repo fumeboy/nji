@@ -25,11 +25,9 @@ func (v *ig) Handle(c *nji.Context) {
 }
 
 func TestContextI(t *testing.T) {
-	app := nji.Config{
-		UnescapePathValues: true,
-	}.New()
-	app.GET("/api/", nji.Inject(&ig{}))
-	r, err := http.NewRequest("GET", "/api/?A=Hello &B=World!", nil)
+	app := nji.NewLazyRouter()
+	app.GET(&ig{})
+	r, err := http.NewRequest("GET", "/ig?A=Hello &B=World!", nil)
 	if err != nil {
 		t.Error(err.Error())
 		return

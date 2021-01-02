@@ -8,14 +8,18 @@ import (
 var _ nji.Plugin = &PostParam{}
 var _ nji.Plugin = &PostParamOptional{}
 
-var PostParamFail = err{"PostParamFail"}
+var postParamFail = err{"PostParamFail"}
 
 type PostParam struct {
 	Value string
 }
 
+func (pl PostParam) Support() nji.Method {
+	return nji.MethodP
+}
+
 type PostParamOptional struct {
-	Value string
+	PostParam
 	optional
 }
 
@@ -27,7 +31,7 @@ func (pl PostParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji
 		var ok bool
 		pl.Value,ok = c.PostParam(name)
 		if !ok {
-			c.Error = PostParamFail
+			c.Error = postParamFail
 		}
 	}
 }

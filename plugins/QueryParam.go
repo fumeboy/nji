@@ -8,14 +8,18 @@ import (
 var _ nji.Plugin = &QueryParam{}
 var _ nji.Plugin = &QueryParamOptional{}
 
-var QueryParamFail = err{"QueryParamFail"}
+var queryParamFail = err{"queryParamFail"}
 
 type QueryParam struct {
 	Value string
 }
 
+func (pl QueryParam) Support() nji.Method {
+	return nji.MethodGet | nji.MethodHead
+}
+
 type QueryParamOptional struct {
-	Value string
+	QueryParam
 	optional
 }
 
@@ -27,7 +31,7 @@ func (pl QueryParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nj
 		var ok bool
 		pl.Value,ok = c.QueryParam(name)
 		if !ok {
-			c.Error = QueryParamFail
+			c.Error = queryParamFail
 		}
 	}
 }

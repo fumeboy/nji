@@ -12,7 +12,7 @@ import (
 
 var _ nji.ViewI = &a{}
 
-type json_t struct {
+type json struct {
 	Body struct{
 		plugins.DynJSON
 		A string
@@ -20,18 +20,16 @@ type json_t struct {
 	}
 }
 
-func (v *json_t) Handle(c *nji.Context) {
+func (v *json) Handle(c *nji.Context) {
 	c.ResponseWriter.WriteHeader(200)
 	_, _ = c.ResponseWriter.Write([]byte(v.Body.A+v.Body.B))
 }
 
 func TestContextJSON(t *testing.T) {
-	app := nji.Config{
-		UnescapePathValues: true,
-	}.New()
-	app.POST("/api/", nji.Inject(&json_t{}))
+	app := nji.NewLazyRouter()
+	app.POST(&json{})
 	reader := strings.NewReader(`{"A":"Hello ", "B": "World!"}`)
-	r, err := http.NewRequest(http.MethodPost, "/api/", reader)
+	r, err := http.NewRequest(http.MethodPost, "/json", reader)
 	if err != nil {
 		t.Error(err.Error())
 		return
