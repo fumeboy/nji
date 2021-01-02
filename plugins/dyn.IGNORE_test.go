@@ -11,22 +11,24 @@ import (
 
 var _ nji.ViewI = &a{}
 
-type c struct {
-	A plugins.QueryParam
-	B,C,D,E,F plugins.QueryParamOptional
-
+type ig struct {
+	Body struct{
+		plugins.DynIgnore
+		A plugins.QueryParam
+		B plugins.QueryParamOptional
+	}
 }
 
-func (v *c) Handle(c *nji.Context) {
+func (v *ig) Handle(c *nji.Context) {
 	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.A.Value+v.B.Value))
+	_, _ = c.ResponseWriter.Write([]byte(v.Body.A.Value+v.Body.B.Value))
 }
 
-func TestContextC(t *testing.T) {
+func TestContextI(t *testing.T) {
 	app := nji.Config{
 		UnescapePathValues: true,
 	}.New()
-	app.GET("/api/", nji.Inject(&c{}))
+	app.GET("/api/", nji.Inject(&ig{}))
 	r, err := http.NewRequest("GET", "/api/?A=Hello &B=World!", nil)
 	if err != nil {
 		t.Error(err.Error())
@@ -34,5 +36,5 @@ func TestContextC(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
-	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
+	assert.Equal(t, "", string(w.Body.Bytes()))
 }

@@ -1,6 +1,7 @@
 package plugins_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"nji"
@@ -29,5 +30,7 @@ func TestContext(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	app.ServeHTTP(httptest.NewRecorder(), r)
+	w := httptest.NewRecorder()
+	app.ServeHTTP(w, r)
+	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
 }

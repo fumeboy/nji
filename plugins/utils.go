@@ -1,5 +1,7 @@
 package plugins
 
+import "unsafe"
+
 type optional struct {
 	notEmpty bool
 }
@@ -15,4 +17,9 @@ type err struct {
 
 func (e err) Error() string {
 	return e.msg
+}
+
+type face struct {
+	typ *struct{}
+	word unsafe.Pointer
 }

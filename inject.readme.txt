@@ -22,13 +22,17 @@ type view struct {
 }
 
 type view struct {
-	UserID RequireAuth
+	isAdmin struct{
+        GroupAdmin
+    }
 	Body struct{
 	    GroupJSON
 		Password string
-		isAdmin struct{
-		    GroupAdmin
-		    Key string
-        }
 	}
 }
+
+只允许嵌套一层
+
+嵌套匿名结构体功能
+    1  将整个匿名结构体作为 plugin 处理
+    2  结构体下属插件列表作为 group plugin 的扩展

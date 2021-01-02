@@ -12,30 +12,32 @@ import (
 
 var _ nji.ViewI = &a{}
 
-type b struct {
-	A plugins.PostParam
-	B,C,D,E,F plugins.PostParamOptional
+type json_t struct {
+	Body struct{
+		plugins.DynJSON
+		A string
+		B string
+	}
 }
 
-func (v *b) Handle(c *nji.Context) {
+func (v *json_t) Handle(c *nji.Context) {
 	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.A.Value+v.B.Value))
+	_, _ = c.ResponseWriter.Write([]byte(v.Body.A+v.Body.B))
 }
 
-func TestContextB(t *testing.T) {
+func TestContextJSON(t *testing.T) {
 	app := nji.Config{
 		UnescapePathValues: true,
 	}.New()
-	app.POST("/api/", nji.Inject(&b{}))
-	reader := strings.NewReader(`A=Hello &B=World!`)
+	app.POST("/api/", nji.Inject(&json_t{}))
+	reader := strings.NewReader(`{"A":"Hello ", "B": "World!"}`)
 	r, err := http.NewRequest(http.MethodPost, "/api/", reader)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	r.Header.Add("Content-Type","application/x-www-form-urlencoded")
+	r.Header.Add("Content-Type","application/json")
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
-
 	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
 }

@@ -14,78 +14,88 @@ type face struct {
 }
 
 
-type injectorManager struct {
-	group     []PluginGroup
-}
-
-func isGroup(stru interface{}) bool{
-	t := reflect.TypeOf(stru).Elem()
-	length := t.NumField()
-	if length == 0 {
-		return false
-	}
-	for i := 0; i < length; i++ {
-		if _, ok := reflect.New(t.Field(i).Type).Interface().(PluginGroup); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func (mgr *injectorManager) ParseGroup(stru interface{}, offset uintptr) func(base ViewAddr, c *Context){
+func parseGroup(stru PluginGroup, offset uintptr) inj{
 	t := reflect.TypeOf(stru).Elem()
 	length := t.NumField()
 	if length == 0 {
 		return nil
 	}
 	var injectors []func(base ViewAddr, c *Context)
-	pgNum := 0
-	for i := 0; i < length; i++ {
+	var ctrl = stru.InjectAndControl(t.Field(0))
+	for i := 1; i < length; i++ {
 		f := t.Field(i)
-		if f.Type.Name() == "" {
-			if f.Type.Kind().String() == "struct" {
-				if stru := reflect.New(f.Type).Interface(); isGroup(stru) {
-					fn := mgr.ParseGroup(stru, f.Offset)
-					if fn != nil{
-						injectors = append(injectors, fn)
-					}
-				}
-			} else {
-				panic("")
-			}
-		} else {
-			if fv, ok := reflect.New(f.Type).Interface().(PluginGroup); ok {
-				pgNum++
-				mgr.group = append(mgr.group, fv)
-				if fn := fv.Control();fn != nil{
-					injectors = append(injectors, fn)
-				}
-				goto L
-			}
+		if f.Type.Kind().String() == "interface" {
+			panic("非法的 struct field")
 		}
-		// 不含 group plugin 的 无类型名 struct
-		// 和非 PluginGroup 的其他类型
-		for j := len(mgr.group) - 1; j >= 0; j-- {
-			fn, ok := mgr.group[j].Proxy(f)
-			if ok {
-				if fn != nil{
-					injectors = append(injectors, fn)
-				}
-				goto L
+		if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
+			if fn := fv.Inject(f);fn!=nil{
+				injectors = append(injectors, fv.Inject(f))
 			}
+		}else{
+			panic("非法的 struct field")
 		}
-		panic("")
-	L:
 	}
-	mgr.group = mgr.group[:len(mgr.group)-pgNum]
+	if ctrl == nil && len(injectors) == 0{
+		return nil
+	}
+
+	if ctrl != nil {
+		return func(base ViewAddr, c *Context) {
+			b := ViewAddr(uintptr(base) + offset)
+			if ctrl(b,c) > PluginGroupCtrlSuccess {
+				return
+			}
+			for i := 0;i<len(injectors);i++{
+				injectors[i](b, c)
+				if c.Error != nil{
+					return
+				}
+			}
+		}
+	}
+
 	return func(base ViewAddr, c *Context) {
 		b := ViewAddr(uintptr(base) + offset)
 		for i := 0;i<len(injectors);i++{
 			injectors[i](b, c)
 			if c.Error != nil{
-				if _,ok := c.Error.(SkipE); ok {
-					c.Error = nil
-				}
+				return
+			}
+		}
+	}
+}
+
+func parse(stru interface{}) inj {
+	t := reflect.TypeOf(stru).Elem()
+	length := t.NumField()
+	if length == 0 {
+		return nil
+	}
+	var injectors []func(base ViewAddr, c *Context)
+	for i := 0; i < length; i++ {
+		f := t.Field(i)
+		if f.Type.Kind().String() == "interface" {
+			panic("非法的 struct field")
+		}
+		if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
+			if fn := fv.Inject(f);fn!=nil{
+				injectors = append(injectors, fn)
+			}
+		}else if fv, ok := reflect.New(f.Type).Interface().(PluginGroup); ok {
+			if fn := parseGroup(fv, f.Offset);fn!=nil{
+				injectors = append(injectors, fn)
+			}
+		}else{
+			panic("非法的 struct field")
+		}
+	}
+	if len(injectors) == 0{
+		return nil
+	}
+	return func(b ViewAddr, c *Context) {
+		for i := 0;i<len(injectors);i++{
+			injectors[i](b, c)
+			if c.Error != nil{
 				return
 			}
 		}
@@ -96,10 +106,10 @@ func Inject(view ViewI) Handler {
 	t := reflect.TypeOf(view).Elem()
 	size := t.Size()
 	length := t.NumField()
-	if length == 0 {
-		return nil
+	var injector inj
+	if length > 0 {
+		injector = parse(view)
 	}
-	var injector = (&injectorManager{[]PluginGroup{&rootGroupPlugin{}}}).ParseGroup(view, 0)
 
 	return func(c *Context) {
 		addr := C.malloc(C.ulong(size))
@@ -108,10 +118,12 @@ func Inject(view ViewI) Handler {
 		new_view := view
 		(*face)(unsafe.Pointer(&new_view)).data = unsafe.Pointer(addr)
 
-		injector(ViewAddr(addr), c)
-		if c.Error != nil {
-			_, _ = c.ResponseWriter.Write([]byte(c.Error.Error()))
-			return
+		if injector != nil{
+			injector(ViewAddr(addr), c)
+			if c.Error != nil {
+				_, _ = c.ResponseWriter.Write([]byte(c.Error.Error()))
+				return
+			}
 		}
 		new_view.Handle(c)
 	}

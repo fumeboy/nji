@@ -3,37 +3,21 @@ package nji
 import "reflect"
 type inj = func(base ViewAddr, c *Context)
 
-type SkipE struct {}
+type PluginGroupCtrl int8
 
-func (e SkipE) Error() string {
-	return ""
-}
+const (
+	PluginGroupCtrlSuccess PluginGroupCtrl = iota
+	PluginGroupCtrlSkip
+	PluginGroupCtrlFail
+)
 
 type Plugin interface {
 	Inject(f reflect.StructField) func(base ViewAddr, c *Context)
 }
 
 type PluginGroup interface {
-	Proxy(f reflect.StructField) (fn func(base ViewAddr, c *Context), ok bool)
-	Control() func(base ViewAddr, c *Context)
+	InjectAndControl(f reflect.StructField) func(base ViewAddr, c *Context) PluginGroupCtrl
 }
-
-var _ PluginGroup = &rootGroupPlugin{}
-
-type rootGroupPlugin struct {
-}
-
-func (pg *rootGroupPlugin) Proxy(f reflect.StructField) (fn func(base ViewAddr, c *Context), ok bool) {
-	if fv, ok := reflect.New(f.Type).Interface().(Plugin).(Plugin); ok {
-		return fv.Inject(f),true
-	}
-	return nil,false
-}
-
-func (pg *rootGroupPlugin) Control() func(base ViewAddr, c *Context) {
-	return nil
-}
-
 
 
 type InnerPluginPathParam struct {
