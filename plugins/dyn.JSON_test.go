@@ -21,8 +21,7 @@ type json struct {
 }
 
 func (v *json) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.Body.A+v.Body.B))
+	c.Resp.String(200,v.Body.A+v.Body.B)
 }
 
 func TestContextJSON(t *testing.T) {

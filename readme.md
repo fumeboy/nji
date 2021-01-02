@@ -12,8 +12,8 @@ type a struct {
 }
 
 func (view *a) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(view.A.Value))
+	c.Resp.Writer.WriteHeader(200)
+	_, _ = c.Resp.Writer.Write([]byte(view.A.Value))
 }
 
 func main() {
@@ -37,8 +37,8 @@ type json_t struct {
 }
 
 func (v *json_t) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.Body.A+v.Body.B))
+	c.Resp.Writer.WriteHeader(200)
+	_, _ = c.Resp.Writer.Write([]byte(v.Body.A+v.Body.B))
 }
 
 func TestContextJSON(t *testing.T) {

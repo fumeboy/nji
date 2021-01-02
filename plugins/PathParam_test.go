@@ -17,8 +17,7 @@ type a struct {
 }
 
 func (view *a) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(view.A.Value + view.B.Value))
+	c.Resp.String(200,view.A.Value + view.B.Value)
 }
 
 func TestContext(t *testing.T) {

@@ -1,6 +1,7 @@
 package nji
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/url"
@@ -9,20 +10,16 @@ import (
 
 // 上下文
 type Context struct {
-	PathParams     PathParams
-	handlers       HandlersChain
-	ResponseWriter http.ResponseWriter
-	fullPath       string
-	engine         *Engine
-	Request        *http.Request
-	index          int8
-	parsed         bool // 是否已解析body
-
-	mem map[string]interface{}
+	PathParams PathParams
+	handlers   HandlersChain
+	Resp       Response
+	fullPath   string
+	engine     *Engine
+	Request    *http.Request
+	index      int8
+	parsed     bool // 是否已解析body
 
 	Error error
-
-	offset uintptr
 }
 
 var emptyValues url.Values
@@ -30,18 +27,13 @@ var emptyValues url.Values
 // 重置Context
 func (ctx *Context) reset(req *http.Request, resp http.ResponseWriter) {
 	ctx.Request = req
-	ctx.ResponseWriter = resp
+	ctx.Resp.Writer = resp
 	ctx.PathParams = ctx.PathParams[0:0]
 	ctx.handlers = nil
 	ctx.index = -1
 	ctx.fullPath = ""
 	ctx.parsed = false
-	ctx.mem = map[string]interface{}{}
 	ctx.Error = nil
-}
-
-func (ctx *Context) moveBase(o uintptr){
-	ctx.offset += o
 }
 
 // 解析form数据
@@ -83,18 +75,19 @@ func (ctx *Context) IsAborted() bool {
 }
 
 // 在Context中写值
-func (ctx *Context) SetValue(key string, value interface{}) bool {
-	if _,ok := ctx.mem[key]; ok {
-		return false
-	}else{
-		ctx.mem[key] = value
-		return true
+func (ctx *Context) SetValue(key, value interface{}) {
+	if key == nil {
+		return
 	}
+	ctx.Request = ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), key, value))
 }
 
 // 从Context中取值
-func (ctx *Context) GetValue(key string) interface{} {
-	return ctx.mem[key]
+func (ctx *Context) GetValue(key interface{}) interface{} {
+	if key == nil {
+		return nil
+	}
+	return ctx.Request.Context().Value(key)
 }
 
 // 向客户端发送重定向响应
@@ -103,8 +96,8 @@ func (ctx *Context) Redirect(code int, url string) {
 		// panic
 		return
 	}
-	ctx.ResponseWriter.Header().Set("Location", url)
-	ctx.ResponseWriter.WriteHeader(code)
+	ctx.Resp.Writer.Header().Set("Location", url)
+	ctx.Resp.Writer.WriteHeader(code)
 }
 
 // 获得客户端真实IP

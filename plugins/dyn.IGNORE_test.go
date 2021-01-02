@@ -20,8 +20,7 @@ type ig struct {
 }
 
 func (v *ig) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.Body.A.Value+v.Body.B.Value))
+	c.Resp.String(200, v.Body.A.Value+v.Body.B.Value)
 }
 
 func TestContextI(t *testing.T) {

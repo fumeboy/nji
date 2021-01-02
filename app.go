@@ -7,18 +7,18 @@ import (
 	"sync"
 )
 
-// 默认body限制
+// body 大小限制
 const MaxMultipartMemory = 1<<10<<2 // 4k
 
 // 配置
 type Config struct {
 	UseRawPath         bool  // 使用url.RawPath查找参数
 	UnescapePathValues bool  // 反转义路由参数
-	MaxMultipartMemory int64 // 允许的请求Body大小(默认1 << 12 = 4KB)
+	MaxMultipartMemory int64 // 允许的请求Body大小
 
 	RootPath string // 根路径
 
-	CORS             bool // 是否启用自动CORS处理
+	CORS             bool // CORS
 	AllowOrigins     string
 	ExposeHeaders    string
 	AllowMethods     string
@@ -81,32 +81,19 @@ func (config Config) New() *Engine {
 
 // 实现http.Handler接口，并且是连接调度的入口
 func (engine *Engine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	ctx := engine.contextPool.Get().(*Context)
 	defer func() {
-		err := recover()
-		if err != nil {
-			// 触发panic事件
+		engine.contextPool.Put(ctx)
+		if err := recover(); err != nil {
+			ctx.Resp.String(500,"Internal Server Error")
 		}
 	}()
-	// 从池中取出一个ctx
-	ctx := engine.contextPool.Get().(*Context)
-	// 重置取出的ctx
 	ctx.reset(req, resp)
-	// 处理请求
-	engine.handleRequest(ctx)
-	// 将ctx放回池中
-	engine.contextPool.Put(ctx)
-}
 
-func (engine *Engine) Run(port int) error {
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), engine)
-}
-
-// 处理连接请求
-func (engine *Engine) handleRequest(ctx *Context) {
 	if engine.Config.CORS {
-		engine.setCORS(ctx.Request, ctx.ResponseWriter)
+		engine.setCORS(ctx.Request, ctx.Resp.Writer)
 		if ctx.Request.Method == "OPTIONS" {
-			ctx.ResponseWriter.WriteHeader(http.StatusNoContent)
+			ctx.Resp.Writer.WriteHeader(http.StatusNoContent)
 			return
 		}
 	}
@@ -135,8 +122,11 @@ func (engine *Engine) handleRequest(ctx *Context) {
 	}
 
 	// 404
-	ctx.ResponseWriter.WriteHeader(404)
-	_, _ = ctx.ResponseWriter.Write([]byte("404 not found"))
+	ctx.Resp.String(404,"404 not found")
+}
+
+func (engine *Engine) Run(port int) error {
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), engine)
 }
 
 // 添加路由

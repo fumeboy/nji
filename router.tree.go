@@ -550,3 +550,32 @@ walk: // Outer loop for walking the tree
 		return
 	}
 }
+
+// 计算最长公用前缀
+func longestCommonPrefix(a, b string) int {
+	i := 0
+
+	var max int
+	if len(a) > len(b) {
+		max = len(b)
+	}else{
+		max = len(a)
+	}
+	for i < max && a[i] == b[i] {
+		i++
+	}
+	return i
+}
+
+func countParams(path string) uint8 {
+	var n uint
+	for i := 0; i < len(path); i++ {
+		if path[i] == ':' || path[i] == '*' {
+			n++
+		}
+	}
+	if n >= 255 {
+		return 255
+	}
+	return uint8(n)
+}

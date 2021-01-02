@@ -142,7 +142,7 @@ func inject(view ViewI,hook func(f reflect.StructField)) Handler {
 		if injector != nil {
 			injector(ViewAddr(addr), c)
 			if c.Error != nil {
-				_, _ = c.ResponseWriter.Write([]byte(c.Error.Error()))
+				_, _ = c.Resp.Writer.Write([]byte(c.Error.Error()))
 				return
 			}
 		}

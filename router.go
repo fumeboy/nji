@@ -178,7 +178,7 @@ func (router *Router) File(urlPath, absPath string) RouterInterface {
 		if fileInfo.IsDir() {
 			panic("This route cannot set a directory")
 		}
-		http.ServeFile(ctx.ResponseWriter, ctx.Request, absPath)
+		http.ServeFile(ctx.Resp.Writer, ctx.Request, absPath)
 	}
 	router.GET(urlPath, handler)
 	router.HEAD(urlPath, handler)
@@ -205,7 +205,7 @@ func (router *Router) Dir(urlPath, absPath string) RouterInterface {
 		if err != nil {
 			panic("Unable to find directory '" + finalAbsPath + "'")
 		}
-		http.ServeFile(ctx.ResponseWriter, ctx.Request, finalAbsPath)
+		http.ServeFile(ctx.Resp.Writer, ctx.Request, finalAbsPath)
 	}
 
 	finalUrlPath := path.Join(urlPath, "/*filepath")
@@ -213,4 +213,26 @@ func (router *Router) Dir(urlPath, absPath string) RouterInterface {
 	router.HEAD(finalUrlPath, handler)
 
 	return router.getRouter()
+}
+
+// 取最后一个字符
+func lastChar(str string) uint8 {
+	if str == "" {
+		panic("The length of the string can't be 0")
+	}
+	return str[len(str)-1]
+}
+
+// 拼接路径
+func joinPaths(absolutePath, relativePath string) string {
+	if relativePath == "" {
+		return absolutePath
+	}
+
+	finalPath := path.Join(absolutePath, relativePath)
+	appendSlash := lastChar(relativePath) == '/' && lastChar(finalPath) != '/'
+	if appendSlash {
+		return finalPath + "/"
+	}
+	return finalPath
 }

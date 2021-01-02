@@ -18,8 +18,7 @@ type b struct {
 }
 
 func (v *b) Handle(c *nji.Context) {
-	c.ResponseWriter.WriteHeader(200)
-	_, _ = c.ResponseWriter.Write([]byte(v.A.Value+v.B.Value))
+	c.Resp.String(200,v.A.Value+v.B.Value)
 }
 
 func TestContextB(t *testing.T) {
