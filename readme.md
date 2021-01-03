@@ -54,7 +54,7 @@ func (v *j) Handle(c *nji.Context) {
 
 nji 通过使用依赖注入来节省业务代码的反复书写
 
-它提供接口 `Plugin`  来达成这个目的， 一共有三种使用 Plugin 的方式
+它提供接口 `Plugin`  来达成这个目的， 一共有两种使用 Plugin 的方式
 
 ## 1. 简单插件
 
