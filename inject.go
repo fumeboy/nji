@@ -5,16 +5,28 @@ package nji
 import "C"
 import (
 	"reflect"
+	"runtime"
+	"sync"
 	"unsafe"
 )
 
 type View interface {
 	Handle(c *Context)
 }
+
 type ViewAddress uintptr
 func (c ViewAddress) Offset (o uintptr) unsafe.Pointer {
 	return unsafe.Pointer(uintptr(c) + o)
 }
+
+type viewInPool struct {
+	address unsafe.Pointer
+	view View
+}
+var viewPools = struct {
+	pools []sync.Pool
+}{}
+
 
 type face struct {
 	tab  *struct{}
@@ -59,30 +71,39 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 	}
 }
 
-func inject(view View, hook func(f reflect.StructField)) Handler {
-	t := reflect.TypeOf(view).Elem()
+func inject(default_view View, hook func(f reflect.StructField)) Handler {
+	t := reflect.TypeOf(default_view).Elem()
 	size := t.Size()
 	length := t.NumField()
 	var injector inj
 	if length > 0 {
-		injector = parse(view, hook)
+		injector = parse(default_view, hook)
 	}
-
+	viewPools.pools = append(viewPools.pools, sync.Pool{})
+	p := &viewPools.pools[len(viewPools.pools)-1]
+	p.New = func() interface{} {
+		ret := &viewInPool{}
+		ret.address = C.malloc(C.ulong(size))
+		C.memcpy(ret.address, (*face)(unsafe.Pointer(&default_view)).data, C.size_t(size))
+		ret.view = default_view
+		(*face)(unsafe.Pointer(&ret.view)).data = ret.address
+		runtime.SetFinalizer(ret, func(ret *viewInPool) {
+			C.free(ret.address)
+		})
+		return ret
+	}
 	return func(c *Context) {
-		addr := C.malloc(C.ulong(size))
-		defer C.free(unsafe.Pointer(addr))
-		C.memcpy(unsafe.Pointer(addr), (*face)(unsafe.Pointer(&view)).data, C.size_t(size))
-		new_view := view
-		(*face)(unsafe.Pointer(&new_view)).data = unsafe.Pointer(addr)
-
+		v := p.Get().(*viewInPool)
+		C.memcpy(v.address, (*face)(unsafe.Pointer(&default_view)).data, C.size_t(size)) // reset
 		if injector != nil {
-			injector(ViewAddress(addr), c)
+			injector(ViewAddress(v.address), c)
 			if c.Error != nil {
 				_, _ = c.Resp.Writer.Write([]byte(c.Error.Error()))
 				return
 			}
 		}
-		new_view.Handle(c)
+		v.view.Handle(c)
+		p.Put(v)
 	}
 }
 
