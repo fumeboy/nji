@@ -33,18 +33,18 @@ type PostParamOptional struct {
 	optional
 }
 
-func (pl PostParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl PostParam) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		c.Error = (*PostParam)(base.Offset(offset)).Exec(c,name)
 	}
 }
 
-func (pl PostParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl PostParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		if (*PostParam)(base.Offset(offset)).Exec(c,name) != nil{
 			pl.optional.notEmpty = true
 		}

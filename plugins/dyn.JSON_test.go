@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-var _ nji.ViewI = &a{}
+var _ nji.View = &a{}
 
 type json struct {
 	Body struct{

@@ -33,18 +33,18 @@ func (pl *QueryParam) Exec(c *nji.Context, name string) error {
 	}
 }
 
-func (pl QueryParam) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl QueryParam) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		c.Error = (*QueryParam)(base.Offset(offset)).Exec(c, name)
 	}
 }
 
-func (pl QueryParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl QueryParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		if (*QueryParam)(base.Offset(offset)).Exec(c, name) != nil {
 			pl.optional.notEmpty = true
 		}

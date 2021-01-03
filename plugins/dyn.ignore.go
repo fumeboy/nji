@@ -14,6 +14,6 @@ func (pg *DynIgnore) Support() nji.Method {
 	return nji.MethodAny
 }
 
-func (pg *DynIgnore) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context){
+func (pg *DynIgnore) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context){
 	return nil
 }

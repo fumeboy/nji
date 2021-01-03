@@ -22,10 +22,10 @@ func (pl *DynJSON) Support() nji.Method {
 	return nji.MethodP
 }
 
-func (pl *DynJSON) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl *DynJSON) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	fv := reflect.New(f.Type).Interface()
 	offset := f.Offset
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		if ct := c.Request.Header.Get("Content-Type"); ct != "application/json" {
 			c.Error = dynJSONFail
 			return

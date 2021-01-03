@@ -1,7 +1,8 @@
 package nji
 
 import "reflect"
-type inj = func(base ViewAddr, c *Context)
+
+type inj = func(base ViewAddress, c *Context)
 
 type Method int16
 
@@ -29,24 +30,10 @@ func (method *Method) Check(m Method){
 	}
 }
 
-type PluginGroupCtrl int8
-
-const (
-	PluginGroupCtrlSuccess PluginGroupCtrl = iota
-	PluginGroupCtrlSkip
-	PluginGroupCtrlFail
-)
-
 type Plugin interface {
-	Inject(f reflect.StructField) func(base ViewAddr, c *Context)
+	Inject(f reflect.StructField) func(base ViewAddress, c *Context)
 	Support() Method
 }
-
-type PluginGroup interface {
-	InjectAndControl(f reflect.StructField) func(base ViewAddr, c *Context) PluginGroupCtrl
-	Support() Method
-}
-
 
 type InnerPluginPathParam struct {
 	Value string
@@ -60,10 +47,10 @@ func (pl *InnerPluginPathParam) Support() Method {
 	return MethodAny
 }
 
-func (pl InnerPluginPathParam) Inject(f reflect.StructField) func(base ViewAddr, c *Context) {
+func (pl InnerPluginPathParam) Inject(f reflect.StructField) func(base ViewAddress, c *Context) {
 	offset := f.Offset
 	name := f.Name
-	return func(base ViewAddr, c *Context) {
+	return func(base ViewAddress, c *Context) {
 		(*InnerPluginPathParam)(base.Offset(offset)).Exec(c, name)
 	}
 }

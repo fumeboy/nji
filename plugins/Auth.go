@@ -21,9 +21,9 @@ func (pl *Auth) Support() nji.Method {
 	return nji.MethodAny
 }
 
-func (pl Auth) Inject(f reflect.StructField) func(base nji.ViewAddr, c *nji.Context) {
+func (pl Auth) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
 	offset := f.Offset
-	return func(base nji.ViewAddr, c *nji.Context) {
+	return func(base nji.ViewAddress, c *nji.Context) {
 		c.Error = (*Auth)(base.Offset(offset)).Exec(c)
 	}
 }

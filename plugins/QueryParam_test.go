@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-var _ nji.ViewI = &a{}
+var _ nji.View = &a{}
 
 type c struct {
 	A plugins.QueryParam

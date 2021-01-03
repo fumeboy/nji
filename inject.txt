@@ -1,10 +1,5 @@
 # inject
 
-解析结构体时
-
-如果字段是无类型名结构体， 判断是否是 group plugin， 如果不是， 交由 group 处理
-其余类型也交由 group 处理， g 处理不了， 找上级 group， 最终都处理不了则 panic
-
 ## 需求 / 功能
 
 1. 从 request HEAD 获取信息， 比如 Auth

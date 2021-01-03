@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-var _ nji.ViewI = &a{}
+var _ nji.View = &a{}
 
 type a struct {
 	A plugins.PathParam

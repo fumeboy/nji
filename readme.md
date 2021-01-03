@@ -54,7 +54,7 @@ func (v *j) Handle(c *nji.Context) {
 
 nji 通过使用依赖注入来节省业务代码的反复书写
 
-它提供两个接口 `Plugin` 和 `PluginGroup` 来达成这个目的， 一共有三种使用 Plugin 的方式
+它提供接口 `Plugin`  来达成这个目的， 一共有三种使用 Plugin 的方式
 
 ## 1. 简单插件
 
@@ -66,9 +66,11 @@ type view struct {
 }
 ```
 
-## 2. 动态插件
+## 2. 匿名结构体插件
 
-整个匿名结构体作为 `Plugin`
+整个匿名结构体作为 `Plugin` 
+
+（外层结构体通过嵌套一个 Plugin 实体来实现 Plugin 接口）
 
 ```go
 type json struct {
@@ -80,10 +82,12 @@ type json struct {
 }
 ```
 
-## 3. 组联系插件
+## 使用情景
 
-匿名结构体作为作用域，包含 一个 `PluginGroup` 和 N 个 `Plugin`
-
+1. 从 request HEAD 获取信息， 比如 Auth
+2. 从 BODY 解析信息并获取信息，比如 JSON
+3. 验证信息， 是否存在、是否合格， 比如 验证验证码
+4. 从 URL 获取信息， 比如 QueryParam
 
 
 # 性能测试：
