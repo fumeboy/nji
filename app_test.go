@@ -35,3 +35,9 @@ func TestPanicEvent(t *testing.T) {
 	app.ServeHTTP(w, r)
 	assert.Equal(t, w.Body.String(), "Internal Server Error")
 }
+
+func TestStatic(t *testing.T) {
+	app := NewServer()
+	app.Dir("/","/")
+	app.Run(8003)
+}
