@@ -1,15 +1,18 @@
-package nji
+package nji_test
 
 import (
 	"github.com/stretchr/testify/assert"
+
 	"net/http"
 	"net/http/httptest"
+	"nji"
+	"os"
 	"testing"
 )
 
 // 404
 func TestNotFoundEvent(t *testing.T) {
-	app := NewServer()
+	app := nji.NewServer()
 	r, err := http.NewRequest("GET", "/404", nil)
 	if err != nil {
 		t.Error(err.Error())
@@ -22,8 +25,8 @@ func TestNotFoundEvent(t *testing.T) {
 
 // 500
 func TestPanicEvent(t *testing.T) {
-	app := NewServer()
-	app.GET("/", func(ctx *Context) {
+	app := nji.NewServer()
+	app.GET("/", func(ctx *nji.Context) {
 		panic("")
 	})
 	r, err := http.NewRequest("GET", "/", nil)
@@ -37,7 +40,8 @@ func TestPanicEvent(t *testing.T) {
 }
 
 func TestStatic(t *testing.T) {
-	app := NewServer()
-	app.Dir("/","/")
+	app := nji.NewServer()
+	p,_ :=os.Getwd()
+	app.Dir("/",p)
 	app.Run(8003)
 }

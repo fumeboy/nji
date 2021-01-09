@@ -10,6 +10,14 @@ import (
 // body 大小限制
 const MaxMultipartMemory = 1<<10<<2 // 4k
 
+type CORS struct {
+	AllowOrigins     string
+	ExposeHeaders    string
+	AllowMethods     string
+	AllowHeaders     string
+	AllowCredentials bool
+}
+
 // 配置
 type Config struct {
 	UseRawPath         bool  // 使用url.RawPath查找参数
@@ -17,13 +25,7 @@ type Config struct {
 	MaxMultipartMemory int64 // 允许的请求Body大小
 
 	RootPath string // 根路径
-
-	CORS             bool // CORS
-	AllowOrigins     string
-	ExposeHeaders    string
-	AllowMethods     string
-	AllowHeaders     string
-	AllowCredentials bool
+	CORS *CORS
 }
 
 type Engine struct {
@@ -45,15 +47,15 @@ func (config Config) New() *Engine {
 	if config.MaxMultipartMemory == 0 {
 		config.MaxMultipartMemory = MaxMultipartMemory
 	}
-	if config.CORS {
-		if config.AllowMethods == "" {
-			config.AllowMethods = "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+	if config.CORS != nil {
+		if config.CORS.AllowMethods == "" {
+			config.CORS.AllowMethods = "GET,POST,PUT,DELETE,OPTIONS,PATCH"
 		}
-		if config.AllowHeaders == "" {
-			config.AllowHeaders = "*"
+		if config.CORS.AllowHeaders == "" {
+			config.CORS.AllowHeaders = "*"
 		}
-		if config.ExposeHeaders == "" {
-			config.ExposeHeaders = "*"
+		if config.CORS.ExposeHeaders == "" {
+			config.CORS.ExposeHeaders = "*"
 		}
 	}
 	if config.RootPath == ""{
@@ -79,21 +81,21 @@ func (config Config) New() *Engine {
 	return engine
 }
 
-// 实现http.Handler接口，并且是连接调度的入口
+// 实现http.Handler接口
 func (engine *Engine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	ctx := engine.contextPool.Get().(*Context)
 	defer func() {
-		engine.contextPool.Put(ctx)
 		if err := recover(); err != nil {
 			ctx.Resp.String(500,"Internal Server Error")
 		}
 	}()
 	ctx.reset(req, resp)
 
-	if engine.Config.CORS {
+	if engine.Config.CORS != nil {
 		engine.setCORS(ctx.Request, ctx.Resp.Writer)
 		if ctx.Request.Method == "OPTIONS" {
 			ctx.Resp.Writer.WriteHeader(http.StatusNoContent)
+			engine.contextPool.Put(ctx)
 			return
 		}
 	}
@@ -116,13 +118,15 @@ func (engine *Engine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 			ctx.PathParams = value.params
 			ctx.fullPath = value.fullPath
 			ctx.Next()
-			return
+			goto END
 		}
 		break
 	}
 
 	// 404
 	ctx.Resp.String(404,"404 not found")
+END:
+	engine.contextPool.Put(ctx)
 }
 
 func (engine *Engine) Run(port int) error {
@@ -158,13 +162,13 @@ func (engine *Engine) addRoute(method, path string, handlers HandlersChain) {
 
 // 在resp中设置CORS相关的头信息
 func (engine *Engine) setCORS(req *http.Request, resp http.ResponseWriter) {
-	if engine.Config.AllowOrigins == "" {
+	if engine.Config.CORS.AllowOrigins == "" {
 		resp.Header().Set("Access-Control-Allow-Origin", req.Header.Get("Origin"))
 	} else {
-		resp.Header().Set("Access-Control-Allow-Origin", engine.Config.AllowOrigins)
+		resp.Header().Set("Access-Control-Allow-Origin", engine.Config.CORS.AllowOrigins)
 	}
-	resp.Header().Set("Access-Control-Allow-Methods", engine.Config.AllowMethods)
-	resp.Header().Set("Access-Control-Allow-Headers", engine.Config.AllowHeaders)
-	resp.Header().Set("Access-Control-Expose-Headers", engine.Config.ExposeHeaders)
-	resp.Header().Set("Access-Control-Allow-Credentials", strconv.FormatBool(engine.Config.AllowCredentials))
+	resp.Header().Set("Access-Control-Allow-Methods", engine.Config.CORS.AllowMethods)
+	resp.Header().Set("Access-Control-Allow-Headers", engine.Config.CORS.AllowHeaders)
+	resp.Header().Set("Access-Control-Expose-Headers", engine.Config.CORS.ExposeHeaders)
+	resp.Header().Set("Access-Control-Allow-Credentials", strconv.FormatBool(engine.Config.CORS.AllowCredentials))
 }

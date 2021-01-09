@@ -48,9 +48,9 @@ func TestAbort(t *testing.T) {
 func TestAppend(t *testing.T) {
 	app := NewServer()
 	app.Append(func(ctx *Context) {
-		t.Log(1, "append handler 1")
+		t.Log(1)
 	}, func(ctx *Context) {
-		t.Log(2, "append handler 2")
+		t.Log(2)
 	})
 	app.GET("/test", func(ctx *Context) {
 		t.Log(3, ctx.Request.URL.Path)
