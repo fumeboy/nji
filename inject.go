@@ -1,11 +1,9 @@
 package nji
 
-// #include <stdlib.h>
-// #include <string.h>
 import "C"
 import (
+	"math"
 	"reflect"
-	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -31,6 +29,12 @@ var viewPools = struct {
 type face struct {
 	tab  *struct{}
 	data unsafe.Pointer
+}
+
+type slice struct {
+	array unsafe.Pointer
+	len   int
+	cap   int
 }
 
 func parse(stru interface{}, hook func(f reflect.StructField)) inj {
@@ -83,18 +87,15 @@ func inject(default_view View, hook func(f reflect.StructField)) Handler {
 	p := &viewPools.pools[len(viewPools.pools)-1]
 	p.New = func() interface{} {
 		ret := &viewInPool{}
-		ret.address = C.malloc(C.ulong(size))
-		C.memcpy(ret.address, (*face)(unsafe.Pointer(&default_view)).data, C.size_t(size))
+		b := make([]byte, size)
+		ret.address = (*slice)(unsafe.Pointer(&b)).array
 		ret.view = default_view
 		(*face)(unsafe.Pointer(&ret.view)).data = ret.address
-		runtime.SetFinalizer(ret, func(ret *viewInPool) {
-			C.free(ret.address)
-		})
 		return ret
 	}
 	return func(c *Context) {
 		v := p.Get().(*viewInPool)
-		C.memcpy(v.address, (*face)(unsafe.Pointer(&default_view)).data, C.size_t(size)) // reset
+		copy((*[math.MaxInt32]byte)(v.address)[:size], (*[math.MaxInt32]byte)((*face)(unsafe.Pointer(&default_view)).data)[:size]) // reset
 		if injector != nil {
 			injector(ViewAddress(v.address), c)
 			if c.Error != nil {
