@@ -55,18 +55,18 @@ func TestMock(t *testing.T) {
 	go app.Run(8003)
 
 	go func() {
-		for i := 0;i<1000;i++{
+		for i := 0;i<100;i++{
 			go func() {
 				buf := make([]byte, 100)
 				for j := 0;j<10;j++{
-					r, err := http.Get(fmt.Sprintf("http://127.0.0.1:8003/mock/12"))
+					r, err := http.Get(fmt.Sprintf("http://127.0.0.1:8003/mock/%d",j))
 					if err == nil{
 						n,err := r.Body.Read(buf)
 						if err != io.EOF{
 							fmt.Println(err)
 							return
 						}
-						if "12" != string(buf[:n]){
+						if fmt.Sprintf("%d", j) != string(buf[:n]){
 							fmt.Println(123)
 							return
 						}
