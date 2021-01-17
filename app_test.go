@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io"
+	"nji/plugins"
+	"time"
+
 	"net/http"
 	"net/http/httptest"
 	"nji"
-	"nji/plugins"
 	"testing"
-	"time"
 )
 
 // 404

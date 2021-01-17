@@ -13,7 +13,7 @@ type Auth struct {
 
 func (pl *Auth) Exec(c *nji.Context) (err error) {
 	token := c.Request.Header.Get("Authorization")[4:] // `JWT YWxhZGRpbjpvcGVuc2VzYW1l`
-	pl.Claims, err = pl.ParseToken(token)
+	err = pl.ParseToken(token)
 	return
 }
 
@@ -29,7 +29,7 @@ func (pl Auth) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.C
 }
 
 // JWT
-var jwtSecret = ""
+var jwtSecret = []byte("this is the sample key")
 
 // Claim是一些实体（通常指的用户）的状态和额外的元数据
 type Claims struct {
@@ -62,7 +62,7 @@ func (g *Auth) GenerateToken(username, password string) (string, error) {
 }
 
 // 根据传入的token值获取到Claims对象信息，（进而获取其中的用户名和密码）
-func (g Auth) ParseToken(token string) (*Claims, error) {
+func (g *Auth) ParseToken(token string) (error) {
 	//用于解析鉴权的声明，方法内部主要是具体的解码和校验的过程，最终返回*Token
 	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
@@ -72,8 +72,9 @@ func (g Auth) ParseToken(token string) (*Claims, error) {
 		// 从tokenClaims中获取到Claims对象，并使用断言，将该对象转换为我们自己定义的Claims
 		// 要传入指针，项目中结构体都是用指针传递，节省空间。
 		if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
-			return claims, nil
+			g.Claims = claims
+			return nil
 		}
 	}
-	return nil, err
+	return err
 }
