@@ -62,3 +62,48 @@ func TestAppend(t *testing.T) {
 	}
 	app.ServeHTTP(httptest.NewRecorder(), r)
 }
+
+func TestPanic(t *testing.T) {
+	app := NewServer()
+	app.Append(func(ctx *Context) {
+		t.Log(1)
+	}, func(ctx *Context) {
+		t.Log(2)
+	})
+	app.GET("/test/:abc", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+	app.GET("/test/:name", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+}
+
+func TestPanic2(t *testing.T) {
+	app := NewServer()
+	app.Append(func(ctx *Context) {
+		t.Log(1)
+	}, func(ctx *Context) {
+		t.Log(2)
+	})
+	app.GET("/test/:abc/1", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+	app.GET("/test/123/1", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+}
+
+func TestPanic3(t *testing.T) {
+	app := NewServer()
+	app.Append(func(ctx *Context) {
+		t.Log(1)
+	}, func(ctx *Context) {
+		t.Log(2)
+	})
+	app.GET("/test/:name", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+	app.GET("/test/:name", func(ctx *Context) {
+		t.Log(ctx.Request.URL.Path)
+	})
+}
