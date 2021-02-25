@@ -1,7 +1,7 @@
 package nji
 
-import "C"
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"sync"
@@ -37,14 +37,29 @@ type slice struct {
 	cap   int
 }
 
+type field struct {
+	iface Plugin
+	startAt uintptr
+	len uintptr
+	f reflect.StructField
+}
+type fieldDyn struct {
+	fn PluginDyn
+	iface interface{}
+	startAt uintptr
+	len uintptr
+	f reflect.StructField
+}
+
 func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 	t := reflect.TypeOf(stru).Elem()
 	length := t.NumField()
 	if length == 0 {
 		return nil
 	}
-	var injectors []func(base ViewAddress, c *Context)
 	var method Method = -1
+	var fields []*field
+	var fieldsDyn []*fieldDyn
 	for i := 0; i < length; i++ {
 		f := t.Field(i)
 		if f.Type.Kind().String() == "interface" {
@@ -53,22 +68,48 @@ func parse(stru interface{}, hook func(f reflect.StructField)) inj {
 		if hook != nil {
 			hook(f)
 		}
+		if f.Type.Kind().String() == "Ptr"{
+			panic("非法的 struct field")
+		}
 		if fv, ok := reflect.New(f.Type).Interface().(Plugin); ok {
-			if fn := fv.Inject(f); fn != nil {
-				method.Check(fv.Support())
-				injectors = append(injectors, fn)
-			}
+			fields = append(fields, &field{
+				iface:   fv,
+				startAt: f.Offset,
+				len:     f.Type.Size(),
+				f: f,
+			})
+			method.Check(fv.Support())
+		} else if fv, ok := reflect.New(f.Type).Interface().(PluginDyn); ok {
+			fieldsDyn = append(fieldsDyn, &fieldDyn{
+				fn: fv,
+				iface:   reflect.New(f.Type).Interface(),
+				startAt: f.Offset,
+				len:     f.Type.Size(),
+				f:       f,
+			})
+			method.Check(fv.Support())
 		} else {
+			fmt.Println(f)
 			panic("非法的 struct field")
 		}
 	}
-	if len(injectors) == 0 {
+	if len(fields) == 0 && len(fieldsDyn) == 0{
 		return nil
 	}
 	return func(b ViewAddress, c *Context) {
-		for i := 0; i < len(injectors); i++ {
-			injectors[i](b, c)
-			if c.Error != nil {
+		for i := 0; i < len(fields); i++ {
+			ifa := fields[i].iface
+			(*face)(unsafe.Pointer(&ifa)).data = b.Offset(fields[i].startAt)
+			if err := ifa.Inject(c, fields[i].f); err != nil {
+				c.Error = err
+				return
+			}
+		}
+		for i := 0; i < len(fieldsDyn); i++ {
+			ifa := fieldsDyn[i].iface
+			(*face)(unsafe.Pointer(&ifa)).data = b.Offset(fieldsDyn[i].startAt)
+			if err := fieldsDyn[i].fn.Inject(c, fieldsDyn[i].f, ifa); err != nil {
+				c.Error = err
 				return
 			}
 		}

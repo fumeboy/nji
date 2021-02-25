@@ -14,13 +14,9 @@ type PostParam struct {
 	Value string
 }
 
-func (pl PostParam) Support() nji.Method {
-	return nji.MethodP
-}
-
-func (pl *PostParam) Exec(c *nji.Context, name string) error {
+func (pl *PostParam) Inject(c *nji.Context, f reflect.StructField) error {
 	var ok bool
-	pl.Value,ok = c.PostParam(name)
+	pl.Value,ok = c.PostParam(f.Name)
 	if ok{
 		return nil
 	}else{
@@ -28,25 +24,20 @@ func (pl *PostParam) Exec(c *nji.Context, name string) error {
 	}
 }
 
+func (pl PostParam) Support() nji.Method {
+	return nji.MethodP
+}
+
 type PostParamOptional struct {
 	PostParam
 	optional
 }
 
-func (pl PostParam) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(base nji.ViewAddress, c *nji.Context) {
-		c.Error = (*PostParam)(base.Offset(offset)).Exec(c,name)
+func (pl *PostParamOptional)Inject(c *nji.Context, f reflect.StructField) error {
+	if err := pl.PostParam.Inject(c,f); err != nil{
+		pl.optional = false
+	}else{
+		pl.optional = true
 	}
-}
-
-func (pl PostParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(base nji.ViewAddress, c *nji.Context) {
-		if (*PostParam)(base.Offset(offset)).Exec(c,name) != nil{
-			pl.optional.notEmpty = true
-		}
-	}
+	return nil
 }

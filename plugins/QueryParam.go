@@ -23,9 +23,9 @@ type QueryParamOptional struct {
 	optional
 }
 
-func (pl *QueryParam) Exec(c *nji.Context, name string) error {
+func (pl *QueryParam) Inject(c *nji.Context, f reflect.StructField) error {
 	var ok bool
-	pl.Value,ok = c.QueryParam(name)
+	pl.Value,ok = c.QueryParam(f.Name)
 	if ok{
 		return nil
 	}else{
@@ -33,20 +33,11 @@ func (pl *QueryParam) Exec(c *nji.Context, name string) error {
 	}
 }
 
-func (pl QueryParam) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(base nji.ViewAddress, c *nji.Context) {
-		c.Error = (*QueryParam)(base.Offset(offset)).Exec(c, name)
+func (pl *QueryParamOptional) Inject(c *nji.Context, f reflect.StructField) error {
+	if err := pl.QueryParam.Inject(c,f); err != nil{
+		pl.optional = false
+	}else{
+		pl.optional = true
 	}
-}
-
-func (pl QueryParamOptional) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(base nji.ViewAddress, c *nji.Context) {
-		if (*QueryParam)(base.Offset(offset)).Exec(c, name) != nil {
-			pl.optional.notEmpty = true
-		}
-	}
+	return nil
 }

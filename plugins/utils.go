@@ -2,13 +2,7 @@ package plugins
 
 import "unsafe"
 
-type optional struct {
-	notEmpty bool
-}
-
-func (e optional) NotEmpty() bool {
-	return e.notEmpty
-}
+type optional bool
 
 var _ error = err{}
 type err struct {

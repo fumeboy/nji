@@ -1,6 +1,9 @@
 package nji
 
-import "reflect"
+import (
+	"errors"
+	"reflect"
+)
 
 type inj = func(base ViewAddress, c *Context)
 
@@ -31,7 +34,12 @@ func (method *Method) Check(m Method){
 }
 
 type Plugin interface {
-	Inject(f reflect.StructField) func(base ViewAddress, c *Context)
+	Inject(c *Context, f reflect.StructField) error
+	Support() Method
+}
+
+type PluginDyn interface {
+	Inject(c *Context, f reflect.StructField, iface interface{}) error
 	Support() Method
 }
 
@@ -39,20 +47,17 @@ type InnerPluginPathParam struct {
 	Value string
 }
 
-func (pl *InnerPluginPathParam) Exec(c *Context, name string) {
-	pl.Value,_ = c.PathParams.Get(name)
-}
-
 func (pl *InnerPluginPathParam) Support() Method {
 	return MethodAny
 }
 
-func (pl InnerPluginPathParam) Inject(f reflect.StructField) func(base ViewAddress, c *Context) {
-	offset := f.Offset
-	name := f.Name
-	return func(base ViewAddress, c *Context) {
-		(*InnerPluginPathParam)(base.Offset(offset)).Exec(c, name)
+func (pl *InnerPluginPathParam) Inject(c *Context, f reflect.StructField) error{
+	var ok bool
+	pl.Value,ok = c.PathParams.Get(f.Name)
+	if ok {
+		return nil
 	}
+	return errors.New("bad path")
 }
 
 
