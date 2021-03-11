@@ -86,7 +86,7 @@ func (engine *Engine) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	ctx := engine.contextPool.Get().(*Context)
 	defer func() {
 		if err := recover(); err != nil {
-			ctx.Resp.String(500,"Internal Server Error")
+			ctx.Resp.String(500,"Internal Server err")
 		}
 	}()
 	ctx.reset(req, resp)

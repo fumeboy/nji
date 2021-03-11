@@ -1,6 +1,5 @@
 - File
 - group pluginmm
 - ~~Auth(JWT) plugin~~
-- ~~LazyRouter~~
 - ~~view pool~~
 - ~~GC~~

@@ -1,12 +1,7 @@
 package nji_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"nji/plugins"
-	"time"
-
 	"net/http"
 	"net/http/httptest"
 	"nji"
@@ -39,42 +34,5 @@ func TestPanicEvent(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
-	assert.Equal(t, w.Body.String(), "Internal Server Error")
-}
-
-type mock struct {
-	A plugins.PathParam
-}
-
-func (v *mock) Handle(c *nji.Context) {
-	c.Resp.String(200,v.A.Value)
-}
-
-func TestMock(t *testing.T) {
-	app := nji.NewLazyRouter()
-	app.GET(&mock{})
-	go app.Run(8003)
-
-	go func() {
-		for i := 0;i<100;i++{
-			go func() {
-				buf := make([]byte, 100)
-				for j := 0;j<10;j++{
-					r, err := http.Get(fmt.Sprintf("http://127.0.0.1:8003/mock/%d",j))
-					if err == nil{
-						n,err := r.Body.Read(buf)
-						if err != io.EOF{
-							fmt.Println(err)
-							return
-						}
-						if fmt.Sprintf("%d", j) != string(buf[:n]){
-							fmt.Println(123)
-							return
-						}
-					}
-				}
-			}()
-		}
-	}()
-	time.Sleep(19*time.Second)
+	assert.Equal(t, w.Body.String(), "Internal Server err")
 }

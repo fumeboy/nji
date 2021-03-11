@@ -1,8 +1,7 @@
 package nji
 
 import (
-	"context"
-	"net"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,9 +16,12 @@ type Context struct {
 	engine     *Engine
 	Request    *http.Request
 	index      int8
-	parsed     bool // 是否已解析body
 
-	Error error
+	parsed bool // 是否已解析body
+	isJSON bool
+	JSON []byte
+
+	err error
 }
 
 var emptyValues url.Values
@@ -33,11 +35,31 @@ func (ctx *Context) reset(req *http.Request, resp http.ResponseWriter) {
 	ctx.index = -1
 	ctx.fullPath = ""
 	ctx.parsed = false
-	ctx.Error = nil
+	ctx.isJSON = false
+	ctx.JSON = nil
+	ctx.err = nil
+}
+
+func (ctx *Context) IsJSON() bool {
+	if ctx.parsed{
+		return ctx.isJSON
+	}
+	if ct := ctx.Request.Header.Get("Content-Type"); ct != "application/json" {
+		ctx.parsed = true
+		return false
+	}
+	ctx.parsed = true
+	data, err := ioutil.ReadAll(ctx.Request.Body)
+	if err != nil{
+		return false
+	}
+	ctx.JSON = data
+	ctx.isJSON = true
+	return true
 }
 
 // 解析form数据
-func (ctx *Context) parseForm() error {
+func (ctx *Context) ParseForm() error {
 	if ctx.parsed {
 		return nil
 	}
@@ -72,132 +94,4 @@ func (ctx *Context) Abort() {
 
 func (ctx *Context) IsAborted() bool {
 	return ctx.index >= abortIndex
-}
-
-// 在Context中写值
-func (ctx *Context) SetValue(key, value interface{}) {
-	if key == nil {
-		return
-	}
-	ctx.Request = ctx.Request.WithContext(context.WithValue(ctx.Request.Context(), key, value))
-}
-
-// 从Context中取值
-func (ctx *Context) GetValue(key interface{}) interface{} {
-	if key == nil {
-		return nil
-	}
-	return ctx.Request.Context().Value(key)
-}
-
-// 向客户端发送重定向响应
-func (ctx *Context) Redirect(code int, url string) {
-	if code < 300 || code > 308 {
-		// panic
-		return
-	}
-	ctx.Resp.Writer.Header().Set("Location", url)
-	ctx.Resp.Writer.WriteHeader(code)
-}
-
-// 获得客户端真实IP
-func (ctx *Context) RemoteIP() string {
-	ra := ctx.Request.RemoteAddr
-	if ip := ctx.Request.Header.Get("X-Forwarded-For"); ip != "" {
-		ra = strings.Split(ip, ", ")[0]
-	} else if ip := ctx.Request.Header.Get("X-Real-IP"); ip != "" {
-		ra = ip
-	} else {
-		var err error
-		ra, _, err = net.SplitHostPort(ra)
-		if err != nil {
-			return ""
-		}
-	}
-	return ra
-}
-
-// 获取所有GET参数值
-func (ctx *Context) QueryParams() url.Values {
-	return ctx.Request.URL.Query()
-}
-
-// 获取某个GET参数值的string类型
-func (ctx *Context) Query(key string) string {
-	if len(ctx.Request.URL.Query()[key]) == 0 {
-		return ""
-	}
-	return ctx.Request.URL.Query()[key][0]
-}
-
-// 获取某个GET参数
-func (ctx *Context) QueryParam(key string) (string, bool) {
-	if len(ctx.Request.URL.Query()[key]) == 0 {
-		return "", false
-	}
-	return ctx.Request.URL.Query()[key][0], true
-}
-
-// 获取所有POST/PATCH/PUT参数值
-func (ctx *Context) PostParams() url.Values {
-	if err := ctx.parseForm(); err != nil {
-		return emptyValues
-	}
-	return ctx.Request.PostForm
-}
-
-// 获取某个POST/PATCH/PUT参数值的string类型
-func (ctx *Context) Post(key string) string {
-	if err := ctx.parseForm(); err != nil {
-		return ""
-	}
-	vs := ctx.Request.PostForm[key]
-	if len(vs) == 0 {
-		return ""
-	}
-	return ctx.Request.PostForm[key][0]
-}
-
-// 获取某个POST/PATCH/PUT参数
-func (ctx *Context) PostParam(key string) (string, bool) {
-	if err := ctx.parseForm(); err != nil {
-		return "", false
-	}
-	vs := ctx.Request.PostForm[key]
-	if len(vs) == 0 {
-		return "", false
-	}
-	return ctx.Request.PostForm[key][0], true
-}
-
-// 获取所有GET/POST/PUT参数值
-func (ctx *Context) FormParams() url.Values {
-	if err := ctx.parseForm(); err != nil {
-		return emptyValues
-	}
-	return ctx.Request.Form
-}
-
-// 获取某个GET/POST/PUT参数值的string类型
-func (ctx *Context) Form(key string) string {
-	if err := ctx.parseForm(); err != nil {
-		return ""
-	}
-	vs := ctx.Request.Form[key]
-	if len(vs) == 0 {
-		return ""
-	}
-	return ctx.Request.Form[key][0]
-}
-
-// 获取单个GET/POST/PUT参数
-func (ctx *Context) FormParam(key string) (string, bool) {
-	if err := ctx.parseForm(); err != nil {
-		return "", false
-	}
-	vs := ctx.Request.Form[key]
-	if len(vs) == 0 {
-		return "", false
-	}
-	return ctx.Request.Form[key][0], true
 }

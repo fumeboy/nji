@@ -1,4 +1,4 @@
-package plugins
+package inject
 
 import (
 	"github.com/dgrijalva/jwt-go"
@@ -7,25 +7,16 @@ import (
 	"time"
 )
 
+var _ nji.Plugin = &Auth{}
+
 type Auth struct {
 	*Claims
 }
 
-func (pl *Auth) Exec(c *nji.Context) (err error) {
+func (pl *Auth) Inject(c *nji.Context, f reflect.StructField) (err error) {
 	token := c.Request.Header.Get("Authorization")[4:] // `JWT YWxhZGRpbjpvcGVuc2VzYW1l`
 	err = pl.ParseToken(token)
 	return
-}
-
-func (pl *Auth) Support() nji.Method {
-	return nji.MethodAny
-}
-
-func (pl Auth) Inject(f reflect.StructField) func(base nji.ViewAddress, c *nji.Context) {
-	offset := f.Offset
-	return func(base nji.ViewAddress, c *nji.Context) {
-		c.Error = (*Auth)(base.Offset(offset)).Exec(c)
-	}
 }
 
 // JWT
