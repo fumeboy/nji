@@ -30,13 +30,13 @@ func TestGroup(t *testing.T) {
 func TestAbort(t *testing.T) {
 	app := NewServer()
 	group := app.Group("/api")
-	group.GET("/view", func(ctx *Context) {
+	group.GET("/typ", func(ctx *Context) {
 		t.Log(1)
 		ctx.Abort()
 	}, func(ctx *Context) {
 		t.Log(2)
 	})
-	r, err := http.NewRequest("GET", "/api/view", nil)
+	r, err := http.NewRequest("GET", "/api/typ", nil)
 	if err != nil {
 		t.Error(err.Error())
 		return

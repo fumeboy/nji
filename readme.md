@@ -64,16 +64,31 @@ nji 通过使用依赖注入来节省业务代码的反复书写
 type view struct {
 	A inject.PathParam
 }
+func (view *a) Handle(c *nji.Context) {
+	c.Resp.String(200,view.A.Value)
+}
 ```
 其中 PathParam 就是一个从URL获取信息的 Plugin
 
-详见 ./inject 文件夹
+如果不使用依赖注入，那么大概是这样写业务代码：
+
+```go
+func Handle(c *nji.Context) {
+    A,err := c.GetPathParam("A")
+    if err != nil{
+        ...
+    }   
+    c.Resp.String(200,A)
+}
+```
+
+详见 `./inject` 文件夹
 
 ## schema
 
 同时提供简单的 schema 机制，用于校验数据合法性 
 
-详见 ./schema 文件夹
+详见 `./schema` 文件夹
 
 
 # 性能测试：

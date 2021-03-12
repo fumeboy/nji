@@ -5,6 +5,9 @@ import (
 	"regexp"
 )
 
+var _ V = new(IsPhoneNumber)
+var _ RealV = new(phoneNumber)
+
 type IsPhoneNumber struct {
 
 }

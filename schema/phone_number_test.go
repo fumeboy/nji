@@ -14,8 +14,8 @@ var _ nji.View = &a{}
 
 type a struct {
 	A struct {
-		inject.PathParam
-		schema.IsPhoneNumber
+		inject.PathParam // PathParam 注入数据后，会被类型转换为 schema.phoneNumber(RealV)，并调用 check 方法
+		schema.IsPhoneNumber // 这是空结构体。不占据空间并传递类型信息
 	}
 }
 
