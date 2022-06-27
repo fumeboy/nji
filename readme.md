@@ -4,7 +4,7 @@ a web framework for write API quickly.
 
 # feature
 
-* route management easily
+* simplify routing management
 * parameter verification without go tag
 * configurable dependency injection
 
