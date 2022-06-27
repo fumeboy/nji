@@ -16,7 +16,7 @@ the user could write HTTP handler like this:
 // ./_example/view.get_query_params.go
 type get_query_params struct {
 	nji.Route[route.GET, route.ROOT] // define URL
-    // and will got this URL : [GET] http://127.0.0.1:8080/get_query_params?A=phonenumberis&B=12345678901
+    // and could be visit by [GET]http://127.0.0.1:8080/get_query_params?A=phonenumberis&B=12345678901
 
 	A plugins.QueryParam[schema.Must] // define `plugin` to inject args automatically
 	B plugins.QueryParam[struct {
