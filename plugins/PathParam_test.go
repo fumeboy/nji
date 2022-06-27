@@ -1,27 +1,27 @@
-package inject_test
+package plugins_test
 
 import (
+	"github.com/fumeboy/nji"
+	"github.com/fumeboy/nji/plugins"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
-	"nji"
-	"nji/inject"
 	"testing"
 )
 
 var _ nji.View = &a{}
 
 type a struct {
-	A, B inject.PathParam
+	A, B plugins.PathParam[any]
 }
 
 func (view *a) Handle(c *nji.Context) {
-	c.Resp.String(200,view.A.Value + view.B.Value)
+	c.Writer.WriteString(view.A.Value + view.B.Value)
 }
 
 func TestContext(t *testing.T) {
-	app := nji.NewServer()
-	app.GET("/a/:A/:B", nji.Inj(new(a)))
+	app := nji.Default()
+	app.GET("/a/:A/:B", nji.MakeHandle[a]())
 	r, err := http.NewRequest("GET", "/a/Hello /World!", nil)
 	if err != nil {
 		t.Error(err.Error())
@@ -29,5 +29,5 @@ func TestContext(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 	app.ServeHTTP(w, r)
-	assert.Equal(t, "Hello World!", string(w.Body.Bytes()))
+	assert.Equal(t, "Hello World!", w.Body.String())
 }
