@@ -18,10 +18,12 @@ type get_query_params struct {
 	nji.Route[route.GET, route.ROOT] // define URL
     // and could be visit by [GET]http://127.0.0.1:8080/get_query_params?A=phonenumberis&B=12345678901
 
-	A plugins.QueryParam[schema.Must] // define `plugin` to inject args automatically
+
+	A plugins.QueryParam[any] // define `plugin` to inject args automatically
 	B plugins.QueryParam[struct {
-		schema.Must
-		schema.IsPhoneNumber // use generic T as metadata for parameter verification
+        // use generic T as metadata for parameter verification
+		schema.Must // must not null
+		schema.IsPhoneNumber // check if valid as phonenumber
 	}]
 }
 
@@ -31,7 +33,8 @@ func (v *get_query_params) Handle(c *nji.Context) {
 
 func main() {
 	app := nji.Default()
-	nji.Register[get_query_params](app)
+	nji.Register[get_query_params](app) 
+    // `Register` get URL from `nji.Route`, so dont need write URL manualy
 	app.Run(":8080")
 }
 ```
