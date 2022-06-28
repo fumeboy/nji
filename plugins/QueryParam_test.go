@@ -17,10 +17,8 @@ var _ nji.View = &c{}
 type c struct {
 	nji.Route[route.GET, route.ROOT]
 
-	A             plugins.QueryParam[schema.Must]
-	B, C, D, E, F plugins.QueryParam[struct {
-		schema.IsPhoneNumber `metadata:"123"`
-	}]
+	A plugins.QueryParam[schema.NotNull]
+	B plugins.QueryParam[func(schema.NotNull, schema.IsPhoneNumber)]
 }
 
 func (v *c) Handle(c *nji.Context) {

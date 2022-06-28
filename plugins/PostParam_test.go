@@ -16,7 +16,7 @@ var _ nji.View = &b{}
 type b struct {
 	A             plugins.PostParam[any]
 	B, C, D, E, F plugins.PostParam[struct {
-		schema.Must
+		schema.NotNull
 	}]
 }
 

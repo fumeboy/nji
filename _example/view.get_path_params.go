@@ -7,6 +7,9 @@ import (
 )
 
 // please visit http://127.0.0.1:8080/a_prefix/get_path_params/123/456
+
+var _ nji.View = &get_path_params{}
+
 type get_path_params struct {
 	nji.Route[route.GET, BaseRoute]
 

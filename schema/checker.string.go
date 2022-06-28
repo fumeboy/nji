@@ -32,39 +32,43 @@ func BuildStringChecker[T any]() (checker StringChecker, mustNotNull bool) {
 		if t.NumMethod() == 0 {
 			return
 		}
-		panic("invalid struct field")
+		panic("invalid type for schema")
+	}
+	var typecheck = func(t reflect.Type, gotag string) {
+		if t.Kind() == reflect.Interface {
+			panic("invalid type for schema")
+		}
+		if t.Kind() == reflect.Ptr {
+			panic("invalid type for schema")
+		}
+		if t.String() == reflect.TypeOf(NotNull{}).String() {
+			mustNotNull = true
+			return
+		}
+		if fv, ok := reflect.New(t).Interface().(stringCheckerIface); ok {
+			checker.checkers = append(checker.checkers, stringchecker{fv, gotag})
+		} else {
+			panic("StringChecker not support `" + t.Kind().String() + " " + t.String() + "`")
+		}
 	}
 	if t.Kind() == reflect.Struct {
 		if t.PkgPath() != "" {
-			if t.Name() == reflect.TypeOf(Must{}).Name() {
-				mustNotNull = true
-				return
-			} else if fv, ok := reflect.New(t).Interface().(stringCheckerIface); ok {
-				checker.checkers = append(checker.checkers, stringchecker{fv, ""})
-				return
-			}
+			typecheck(t, "")
+			return
 		} else {
-			length := t.NumField()
-			for i := 0; i < length; i++ {
+			for i := 0; i < t.NumField(); i++ {
 				f := t.Field(i)
-				if f.Type.Kind() == reflect.Interface {
-					panic("invalid struct field")
-				}
-				if f.Type.Kind() == reflect.Ptr {
-					panic("invalid struct field")
-				}
-				if f.Type.Name() == reflect.TypeOf(Must{}).Name() {
-					mustNotNull = true
-					continue
-				}
-				if fv, ok := reflect.New(f.Type).Interface().(stringCheckerIface); ok {
-					checker.checkers = append(checker.checkers, stringchecker{fv, string(f.Tag)})
-				} else {
-					panic("StringChecker not support `" + f.Type.Name() + "`")
-				}
+				typecheck(f.Type, string(f.Tag))
 			}
 			return
 		}
 	}
-	panic("StringChecker not support `" + t.Name() + "`")
+	if t.Kind() == reflect.Func && t.PkgPath() == "" {
+		for i := 0; i < t.NumIn(); i++ {
+			arg := t.In(i)
+			typecheck(arg, "")
+		}
+		return
+	}
+	panic("StringChecker not support `" + t.Kind().String() + " " + t.String() + "`")
 }

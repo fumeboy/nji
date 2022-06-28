@@ -7,65 +7,51 @@ a web framework for write API quickly.
 * simplify routing management
 * parameter verification without go tag
 * configurable dependency injection
+# basic usage
 
-# example
-
-the user could write HTTP handler like this:
+## get parameters automatically with `plugins`
 
 ```go
-// ./_example/view.get_query_params.go
+// get params (`A`, `B`) from URL query part, and return `A + B`
 type get_query_params struct {
-	nji.Route[route.GET, route.ROOT] // define URL
-    // and could be visit by [GET]http://127.0.0.1:8080/get_query_params?A=phonenumberis&B=12345678901
-
-
-	A plugins.QueryParam[any] // define `plugin` to inject args automatically
-	B plugins.QueryParam[struct {
-        // use generic T as metadata for parameter verification
-		schema.Must // must not null
-		schema.IsPhoneNumber // check if valid as phonenumber
-	}]
+	A plugins.QueryParam[any]
+	B plugins.QueryParam[any]
 }
-
 func (v *get_query_params) Handle(c *nji.Context) {
 	c.Writer.WriteString(v.A.Value + v.B.Value)
 }
-
-func main() {
-	app := nji.Default()
-	nji.Register[get_query_params](app) 
-    // `Register` get URL from `nji.Route`, so dont need write URL manualy
-	app.Run(":8080")
-}
 ```
 
-instead of:
+## parameter verification with `schema`
 
 ```go
-func get_query_params(c *gin.Context) {
-    a, ok := c.GetQuery("A")
-    if !ok {
-        // ...
-    }
-    b, ok := c.GetQuery("B")
-    if !ok {
-        // ...
-    }
-    if checkIsPhoneNumber(b) {
-        // ...
-    }
+type get_query_params struct {
+	A plugins.QueryParam[schema.NotNull] // check if `A` is null
 
-    c.Writer.WriteString(v.A.Value + v.B.Value)
-}
-
-func main() {
-	router := gin.Default()
-	router.POST("/get_query_params", get_query_params)
-	router.Run(":8080")
+	B plugins.QueryParam[struct { // multi-verificator
+		schema.NotNull 
+		schema.IsPhoneNumber `could pass gotag to schema` // check if `B` is valid as phonenumber
+    }]
+    
+    // or you could write multi-verificator in one-line by this way:
+    C plugins.QueryParam[func(schema.NotNull, schema.IsPhoneNumber)]
 }
 ```
 
-please visit `./_example` and `./plugins/*_test.go` for more examples 
+## compute route automatically with `route`
+
+```go
+type BaseRoute struct {
+	nji.Route[route.ANY, route.ROOT] `a_prefix` // if no gotag, path will use `/BaseRoute/` as component
+}
+
+type get_query_params struct {
+	nji.Route[route.GET, BaseRoute] // output URL = `/a_prefix/get_query_params`
+
+	A plugins.QueryParam[any]
+    // ...
+}
+```
 
 
 
