@@ -31,10 +31,10 @@ type get_query_params struct {
 	B plugins.QueryParam[struct { // multi-verificator
 		schema.NotNull 
 		schema.IsPhoneNumber `could pass gotag to schema` // check if `B` is valid as phonenumber
-    }]
-    
-    // or you could write multi-verificator in one-line by this way:
-    C plugins.QueryParam[func(schema.NotNull, schema.IsPhoneNumber)]
+	}]
+	
+	// or you could write multi-verificator in one-line by this way:
+	C plugins.QueryParam[func(schema.NotNull, schema.IsPhoneNumber)]
 }
 ```
 
@@ -49,7 +49,7 @@ type get_query_params struct {
 	nji.Route[route.GET, BaseRoute] // output URL = `/a_prefix/get_query_params`
 
 	A plugins.QueryParam[any]
-    // ...
+	// ...
 }
 ```
 
